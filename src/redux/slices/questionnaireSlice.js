@@ -1,0 +1,613 @@
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
+
+// Mock questions data for development - organized by categories
+const mockQuestions = [
+  // Financial & Operational Metrics
+  {
+    id: 'metrics_1',
+    category: 'Financial & Operational Metrics',
+    text: 'What is your company\'s annual revenue?',
+    type: 'number',
+    prefix: '$',
+    suffix: '',
+    placeholder: 'Enter annual revenue',
+    defaultValue: 0
+  },
+  {
+    id: 'metrics_2',
+    category: 'Financial & Operational Metrics',
+    text: 'What is your company\'s operating margin percentage?',
+    type: 'number',
+    prefix: '',
+    suffix: '%',
+    placeholder: 'Enter operating margin',
+    defaultValue: 0
+  },
+  {
+    id: 'metrics_3',
+    category: 'Financial & Operational Metrics',
+    text: 'What is the total number of full-time employees (FTEs) in your warehouse operations?',
+    type: 'number',
+    prefix: '',
+    suffix: 'FTEs',
+    placeholder: 'Enter number of FTEs',
+    defaultValue: 0
+  },
+  {
+    id: 'metrics_4',
+    category: 'Financial & Operational Metrics',
+    text: 'What is the fully loaded annual cost per warehouse employee (including benefits, taxes, etc.)?',
+    type: 'number',
+    prefix: '$',
+    suffix: '',
+    placeholder: 'Enter cost per FTE',
+    defaultValue: 0
+  },
+  {
+    id: 'metrics_5',
+    category: 'Financial & Operational Metrics',
+    text: 'What is the annual value of waste/damaged/obsolete inventory?',
+    type: 'number',
+    prefix: '$',
+    suffix: '',
+    placeholder: 'Enter annual waste value',
+    defaultValue: 0
+  },
+  {
+    id: 'metrics_6',
+    category: 'Financial & Operational Metrics',
+    text: 'What is your annual transportation cost?',
+    type: 'number',
+    prefix: '$',
+    suffix: '',
+    placeholder: 'Enter transportation cost',
+    defaultValue: 0
+  },
+  {
+    id: 'metrics_7',
+    category: 'Financial & Operational Metrics',
+    text: 'How many warehouses does your company operate?',
+    type: 'number',
+    prefix: '',
+    suffix: '',
+    placeholder: 'Enter number of warehouses',
+    defaultValue: 0
+  },
+  {
+    id: 'metrics_8',
+    category: 'Financial & Operational Metrics',
+    text: 'What is the total size of your warehouses?',
+    type: 'number',
+    prefix: '',
+    suffix: 'sq ft',
+    placeholder: 'Enter total warehouse space',
+    defaultValue: 0
+  },
+  {
+    id: 'metrics_9',
+    category: 'Financial & Operational Metrics',
+    text: 'What is your annual inbound transaction volume (number of receipts)?',
+    type: 'number',
+    prefix: '',
+    suffix: '',
+    placeholder: 'Enter inbound volume',
+    defaultValue: 0
+  },
+  {
+    id: 'metrics_10',
+    category: 'Financial & Operational Metrics',
+    text: 'What is your annual outbound transaction volume (number of shipments)?',
+    type: 'number',
+    prefix: '',
+    suffix: '',
+    placeholder: 'Enter outbound volume',
+    defaultValue: 0
+  },
+  
+  // Warehouse Infrastructure & Layout
+  {
+    id: 'warehouse_1',
+    category: 'Warehouse Infrastructure',
+    text: 'How would you rate the overall layout efficiency of your warehouse?',
+    options: [
+      { value: '1', label: 'Poor - Inefficient layout with significant travel distances' },
+      { value: '2', label: 'Fair - Some layout optimization but room for improvement' },
+      { value: '3', label: 'Good - Well-designed layout with minimal travel distances' },
+      { value: '4', label: 'Excellent - Optimized layout with strategic product placement' }
+    ]
+  },
+  {
+    id: 'warehouse_2',
+    category: 'Warehouse Infrastructure',
+    text: 'What storage systems are currently in use at your facility?',
+    options: [
+      { value: '1', label: 'Basic - Primarily floor storage and simple shelving' },
+      { value: '2', label: 'Standard - Mix of shelving and some racking systems' },
+      { value: '3', label: 'Advanced - Various racking systems optimized for different products' },
+      { value: '4', label: 'Sophisticated - Automated storage and retrieval systems (AS/RS)' }
+    ]
+  },
+  {
+    id: 'warehouse_3',
+    category: 'Warehouse Infrastructure',
+    text: 'How would you rate your warehouse space utilization?',
+    options: [
+      { value: '1', label: 'Poor - Significant wasted space or overcrowding' },
+      { value: '2', label: 'Fair - Some optimization but inconsistent utilization' },
+      { value: '3', label: 'Good - Efficient use of most available space' },
+      { value: '4', label: 'Excellent - Maximized cubic utilization with flexibility for growth' }
+    ]
+  },
+  {
+    id: 'warehouse_4',
+    category: 'Warehouse Infrastructure',
+    text: 'What level of dock and staging area efficiency exists in your facility?',
+    options: [
+      { value: '1', label: 'Low - Frequent bottlenecks and congestion' },
+      { value: '2', label: 'Moderate - Occasional congestion during peak periods' },
+      { value: '3', label: 'High - Well-organized with minimal congestion' },
+      { value: '4', label: 'Very High - Optimized flow with scheduled appointments and load planning' }
+    ]
+  },
+  
+  // Inventory Management
+  {
+    id: 'inventory_1',
+    category: 'Inventory Management',
+    text: 'How effectively do you manage inventory levels?',
+    options: [
+      { value: '1', label: 'Ineffective - Frequent stockouts or excess inventory' },
+      { value: '2', label: 'Somewhat effective - Occasional issues with inventory levels' },
+      { value: '3', label: 'Effective - Rare inventory issues' },
+      { value: '4', label: 'Highly effective - Optimal inventory levels consistently maintained' }
+    ]
+  },
+  {
+    id: 'inventory_2',
+    category: 'Inventory Management',
+    text: 'What is your current inventory accuracy level?',
+    options: [
+      { value: '1', label: 'Below 90% - Frequent discrepancies' },
+      { value: '2', label: '90-95% - Regular cycle counts needed' },
+      { value: '3', label: '95-98% - Good accuracy with occasional adjustments' },
+      { value: '4', label: '98%+ - Excellent accuracy with minimal adjustments' }
+    ]
+  },
+  {
+    id: 'inventory_3',
+    category: 'Inventory Management',
+    text: 'How do you manage inventory replenishment?',
+    options: [
+      { value: '1', label: 'Reactive - Ordering when stockouts occur or are imminent' },
+      { value: '2', label: 'Basic - Simple min/max or reorder point systems' },
+      { value: '3', label: 'Advanced - Forecasting-based with safety stock calculations' },
+      { value: '4', label: 'Sophisticated - Automated with demand sensing and dynamic adjustments' }
+    ]
+  },
+  {
+    id: 'inventory_4',
+    category: 'Inventory Management',
+    text: 'What inventory classification method do you use?',
+    options: [
+      { value: '1', label: 'None - No formal classification system' },
+      { value: '2', label: 'Basic - Simple ABC analysis' },
+      { value: '3', label: 'Advanced - Multi-criteria classification (value, velocity, criticality)' },
+      { value: '4', label: 'Sophisticated - Dynamic classification with automated adjustments' }
+    ]
+  },
+  {
+    id: 'inventory_5',
+    category: 'Inventory Management',
+    text: 'How do you handle slow-moving or obsolete inventory?',
+    options: [
+      { value: '1', label: 'Reactive - Address only when space is needed' },
+      { value: '2', label: 'Basic - Periodic review and manual identification' },
+      { value: '3', label: 'Proactive - Regular analysis and planned disposition' },
+      { value: '4', label: 'Strategic - Automated identification with optimized disposition channels' }
+    ]
+  },
+  
+  // Warehouse Operations
+  {
+    id: 'operations_1',
+    category: 'Warehouse Operations',
+    text: 'How would you rate your receiving process efficiency?',
+    options: [
+      { value: '1', label: 'Low - Manual processes with frequent delays' },
+      { value: '2', label: 'Moderate - Semi-automated with occasional bottlenecks' },
+      { value: '3', label: 'High - Streamlined processes with minimal delays' },
+      { value: '4', label: 'Very High - Fully optimized with advanced scheduling and cross-docking' }
+    ]
+  },
+  {
+    id: 'operations_2',
+    category: 'Warehouse Operations',
+    text: 'What is your current order picking methodology?',
+    options: [
+      { value: '1', label: 'Basic - Single order picking' },
+      { value: '2', label: 'Standard - Batch picking for some orders' },
+      { value: '3', label: 'Advanced - Zone picking with consolidation' },
+      { value: '4', label: 'Sophisticated - Wave/cluster picking with automation support' }
+    ]
+  },
+  {
+    id: 'operations_3',
+    category: 'Warehouse Operations',
+    text: 'How do you manage your packing and shipping processes?',
+    options: [
+      { value: '1', label: 'Manual - Paper-based with minimal technology' },
+      { value: '2', label: 'Basic - Some automation but primarily manual' },
+      { value: '3', label: 'Advanced - Automated systems with integrated shipping' },
+      { value: '4', label: 'Sophisticated - Fully automated with cartonization and load optimization' }
+    ]
+  },
+  {
+    id: 'operations_4',
+    category: 'Warehouse Operations',
+    text: 'What quality control measures are in place for warehouse operations?',
+    options: [
+      { value: '1', label: 'Minimal - Reactive approach to quality issues' },
+      { value: '2', label: 'Basic - Some quality checks at key points' },
+      { value: '3', label: 'Comprehensive - Systematic quality controls throughout processes' },
+      { value: '4', label: 'Advanced - Predictive quality management with continuous improvement' }
+    ]
+  },
+  {
+    id: 'operations_5',
+    category: 'Warehouse Operations',
+    text: 'How do you handle returns processing?',
+    options: [
+      { value: '1', label: 'Ad-hoc - No formal process' },
+      { value: '2', label: 'Basic - Defined process but largely manual' },
+      { value: '3', label: 'Efficient - Streamlined process with quick disposition' },
+      { value: '4', label: 'Optimized - Automated returns processing with value recovery focus' }
+    ]
+  },
+  
+  // Workforce Management
+  {
+    id: 'workforce_1',
+    category: 'Workforce Management',
+    text: 'How do you manage warehouse staffing levels?',
+    options: [
+      { value: '1', label: 'Reactive - Adjusting only when problems arise' },
+      { value: '2', label: 'Basic - Simple scheduling based on historical patterns' },
+      { value: '3', label: 'Advanced - Data-driven scheduling based on forecasted workload' },
+      { value: '4', label: 'Sophisticated - Dynamic labor management with real-time adjustments' }
+    ]
+  },
+  {
+    id: 'workforce_2',
+    category: 'Workforce Management',
+    text: 'What training programs exist for warehouse personnel?',
+    options: [
+      { value: '1', label: 'Minimal - Basic onboarding only' },
+      { value: '2', label: 'Standard - Role-specific training' },
+      { value: '3', label: 'Comprehensive - Continuous skill development and cross-training' },
+      { value: '4', label: 'Advanced - Personalized development paths with certification programs' }
+    ]
+  },
+  {
+    id: 'workforce_3',
+    category: 'Workforce Management',
+    text: 'How do you measure and manage workforce productivity?',
+    options: [
+      { value: '1', label: 'Limited - Few or no productivity metrics' },
+      { value: '2', label: 'Basic - Simple productivity tracking' },
+      { value: '3', label: 'Advanced - Comprehensive KPIs with regular feedback' },
+      { value: '4', label: 'Sophisticated - Real-time productivity monitoring with incentive programs' }
+    ]
+  },
+  {
+    id: 'workforce_4',
+    category: 'Workforce Management',
+    text: 'What is your approach to safety management in the warehouse?',
+    options: [
+      { value: '1', label: 'Reactive - Addressing issues after incidents' },
+      { value: '2', label: 'Basic - Standard safety protocols and training' },
+      { value: '3', label: 'Proactive - Comprehensive safety program with preventative measures' },
+      { value: '4', label: 'Strategic - Safety-first culture with continuous improvement' }
+    ]
+  },
+  
+  // Technology & Automation
+  {
+    id: 'technology_1',
+    category: 'Technology & Automation',
+    text: 'What level of warehouse management system (WMS) do you currently use?',
+    options: [
+      { value: '1', label: 'Basic - Spreadsheets or simple inventory tracking' },
+      { value: '2', label: 'Standard - Basic WMS with core functionality' },
+      { value: '3', label: 'Advanced - Comprehensive WMS with multiple modules' },
+      { value: '4', label: 'Sophisticated - Fully integrated WMS with advanced analytics' }
+    ]
+  },
+  {
+    id: 'technology_2',
+    category: 'Technology & Automation',
+    text: 'What level of automation exists in your warehouse operations?',
+    options: [
+      { value: '1', label: 'Minimal - Primarily manual processes' },
+      { value: '2', label: 'Basic - Some automation of routine tasks' },
+      { value: '3', label: 'Advanced - Significant automation with some manual oversight' },
+      { value: '4', label: 'Comprehensive - Highly automated with minimal manual intervention' }
+    ]
+  },
+  {
+    id: 'technology_3',
+    category: 'Technology & Automation',
+    text: 'How do you utilize data and analytics in warehouse decision-making?',
+    options: [
+      { value: '1', label: 'Limited - Minimal use of data for decisions' },
+      { value: '2', label: 'Basic - Regular reporting of key metrics' },
+      { value: '3', label: 'Advanced - Analytics-driven decisions with dashboards' },
+      { value: '4', label: 'Sophisticated - Predictive analytics and AI-assisted decision making' }
+    ]
+  },
+  {
+    id: 'technology_4',
+    category: 'Technology & Automation',
+    text: 'What material handling equipment and technology do you employ?',
+    options: [
+      { value: '1', label: 'Basic - Manual equipment (hand trucks, manual pallet jacks)' },
+      { value: '2', label: 'Standard - Powered equipment (forklifts, powered pallet jacks)' },
+      { value: '3', label: 'Advanced - Specialized equipment for different operations' },
+      { value: '4', label: 'Sophisticated - Automated guided vehicles (AGVs) or robotics' }
+    ]
+  },
+  
+  // Supply Chain Integration
+  {
+    id: 'integration_1',
+    category: 'Supply Chain Integration',
+    text: 'How would you rate your current supply chain visibility?',
+    options: [
+      { value: '1', label: 'Poor - Limited visibility across the supply chain' },
+      { value: '2', label: 'Fair - Some visibility but significant gaps exist' },
+      { value: '3', label: 'Good - Visibility across most of the supply chain' },
+      { value: '4', label: 'Excellent - Complete end-to-end visibility' }
+    ]
+  },
+  {
+    id: 'integration_2',
+    category: 'Supply Chain Integration',
+    text: 'What level of integration exists between your warehouse and other supply chain systems?',
+    options: [
+      { value: '1', label: 'Minimal - Largely disconnected systems' },
+      { value: '2', label: 'Basic - Some integration with manual interventions' },
+      { value: '3', label: 'Advanced - Automated integration with key systems' },
+      { value: '4', label: 'Comprehensive - Fully integrated supply chain ecosystem' }
+    ]
+  },
+  {
+    id: 'integration_3',
+    category: 'Supply Chain Integration',
+    text: 'How would you describe your supplier relationship management?',
+    options: [
+      { value: '1', label: 'Transactional - Limited communication with suppliers' },
+      { value: '2', label: 'Developing - Regular communication but limited collaboration' },
+      { value: '3', label: 'Collaborative - Active partnership with key suppliers' },
+      { value: '4', label: 'Strategic - Deep integration and shared objectives with suppliers' }
+    ]
+  },
+  {
+    id: 'integration_4',
+    category: 'Supply Chain Integration',
+    text: 'How resilient is your supply chain to disruptions?',
+    options: [
+      { value: '1', label: 'Vulnerable - Major disruptions cause significant issues' },
+      { value: '2', label: 'Somewhat resilient - Can handle minor disruptions' },
+      { value: '3', label: 'Resilient - Well-prepared for most disruptions' },
+      { value: '4', label: 'Highly resilient - Robust contingency plans for all scenarios' }
+    ]
+  },
+  
+  // Sustainability & Compliance
+  {
+    id: 'sustainability_1',
+    category: 'Sustainability & Compliance',
+    text: 'What sustainability initiatives are implemented in your warehouse operations?',
+    options: [
+      { value: '1', label: 'Minimal - Few or no sustainability initiatives' },
+      { value: '2', label: 'Basic - Some energy efficiency and waste reduction measures' },
+      { value: '3', label: 'Advanced - Comprehensive sustainability program' },
+      { value: '4', label: 'Leading - Fully integrated sustainability strategy with measurable targets' }
+    ]
+  },
+  {
+    id: 'sustainability_2',
+    category: 'Sustainability & Compliance',
+    text: 'How do you manage regulatory compliance in warehouse operations?',
+    options: [
+      { value: '1', label: 'Reactive - Addressing compliance issues as they arise' },
+      { value: '2', label: 'Basic - Standard compliance procedures' },
+      { value: '3', label: 'Proactive - Comprehensive compliance program with regular audits' },
+      { value: '4', label: 'Strategic - Integrated compliance management with continuous monitoring' }
+    ]
+  },
+  
+  // Performance Measurement
+  {
+    id: 'performance_1',
+    category: 'Performance Measurement',
+    text: 'How comprehensive is your warehouse KPI tracking system?',
+    options: [
+      { value: '1', label: 'Limited - Few or inconsistently tracked metrics' },
+      { value: '2', label: 'Basic - Standard KPIs tracked regularly' },
+      { value: '3', label: 'Comprehensive - Extensive KPIs with regular review' },
+      { value: '4', label: 'Advanced - Real-time KPI dashboard with predictive capabilities' }
+    ]
+  },
+  {
+    id: 'performance_2',
+    category: 'Performance Measurement',
+    text: 'How do you measure and improve customer satisfaction?',
+    options: [
+      { value: '1', label: 'Reactive - Address issues when customers complain' },
+      { value: '2', label: 'Basic - Standard service level metrics' },
+      { value: '3', label: 'Proactive - Comprehensive customer satisfaction program' },
+      { value: '4', label: 'Strategic - Customer-centric operations with continuous feedback loop' }
+    ]
+  },
+  {
+    id: 'performance_3',
+    category: 'Performance Measurement',
+    text: 'What continuous improvement methodologies are used in your warehouse?',
+    options: [
+      { value: '1', label: 'Ad-hoc - No formal improvement methodology' },
+      { value: '2', label: 'Basic - Simple improvement initiatives' },
+      { value: '3', label: 'Structured - Formal methodologies (Lean, Six Sigma, etc.)' },
+      { value: '4', label: 'Advanced - Integrated continuous improvement culture' }
+    ]
+  },
+  
+  // Implementation Costs
+  {
+    id: 'implementation_1',
+    category: 'Implementation Costs',
+    text: 'What is the estimated license cost for the supply chain management solution?',
+    type: 'number',
+    prefix: '$',
+    suffix: '',
+    placeholder: 'Enter license cost',
+    defaultValue: 0
+  },
+  {
+    id: 'implementation_2',
+    category: 'Implementation Costs',
+    text: 'What is the estimated implementation cost for the supply chain management solution?',
+    type: 'number',
+    prefix: '$',
+    suffix: '',
+    placeholder: 'Enter implementation cost',
+    defaultValue: 0
+  }
+];
+
+// Helper functions for localStorage persistence
+const getAnswersFromStorage = (companyId) => {
+  try {
+    const storedData = localStorage.getItem(`questionnaire_answers_${companyId}`);
+    if (storedData) {
+      return JSON.parse(storedData);
+    }
+  } catch (error) {
+    console.error(`Error loading answers for company ${companyId}:`, error);
+  }
+  return {};
+};
+
+const saveAnswersToStorage = (companyId, answers) => {
+  try {
+    localStorage.setItem(`questionnaire_answers_${companyId}`, JSON.stringify(answers));
+    return true;
+  } catch (error) {
+    console.error(`Error saving answers for company ${companyId}:`, error);
+    return false;
+  }
+};
+
+// Async thunks for data operations
+export const fetchQuestionnaire = createAsyncThunk(
+  'questionnaire/fetchQuestionnaire',
+  async (companyId, { rejectWithValue }) => {
+    try {
+      if (!companyId) {
+        return rejectWithValue('Company ID is required');
+      }
+      
+      // Load answers from localStorage
+      const answers = getAnswersFromStorage(companyId);
+      
+      return {
+        questions: mockQuestions,
+        answers: answers
+      };
+    } catch (error) {
+      return rejectWithValue('Failed to fetch questionnaire');
+    }
+  }
+);
+
+export const saveQuestionnaireAnswers = createAsyncThunk(
+  'questionnaire/saveAnswers',
+  async ({ companyId, answers }, { rejectWithValue }) => {
+    try {
+      if (!companyId) {
+        return rejectWithValue('Company ID is required');
+      }
+      
+      // Save answers to localStorage
+      const success = saveAnswersToStorage(companyId, answers);
+      
+      if (!success) {
+        return rejectWithValue('Failed to save answers to storage');
+      }
+      
+      return { success: true, companyId, timestamp: new Date().toISOString() };
+    } catch (error) {
+      return rejectWithValue('Failed to save answers');
+    }
+  }
+);
+
+const initialState = {
+  questions: [],
+  answers: {},
+  status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+  error: null,
+};
+
+export const questionnaireSlice = createSlice({
+  name: 'questionnaire',
+  initialState,
+  reducers: {
+    setAnswer: (state, action) => {
+      const { questionId, value } = action.payload;
+      state.answers[questionId] = value;
+    },
+    clearAnswers: (state) => {
+      state.answers = {};
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      // Fetch questionnaire
+      .addCase(fetchQuestionnaire.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(fetchQuestionnaire.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.questions = action.payload.questions;
+        state.answers = action.payload.answers || {};
+        state.error = null;
+      })
+      .addCase(fetchQuestionnaire.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
+      })
+      // Save answers
+      .addCase(saveQuestionnaireAnswers.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(saveQuestionnaireAnswers.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.error = null;
+      })
+      .addCase(saveQuestionnaireAnswers.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
+      });
+  },
+});
+
+export const { setAnswer, clearAnswers } = questionnaireSlice.actions;
+
+// Selectors
+export const selectQuestions = (state) => state.questionnaire.questions;
+export const selectAnswers = (state) => state.questionnaire.answers;
+export const selectQuestionnaireStatus = (state) => state.questionnaire.status;
+export const selectQuestionnaireError = (state) => state.questionnaire.error;
+
+export default questionnaireSlice.reducer;
