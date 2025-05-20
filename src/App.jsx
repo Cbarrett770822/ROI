@@ -11,6 +11,7 @@ import CompanySelectionPage from './pages/CompanySelectionPage';
 import QuestionnairePage from './pages/QuestionnairePage';
 import CalculatorPage from './pages/CalculatorPage';
 import HomePage from './pages/HomePage';
+import WarehouseMapPage from './pages/WarehouseMapPage';
 
 // Import actions
 import { setLoading } from './redux/slices/uiSlice';
@@ -157,6 +158,7 @@ function App() {
             <Route path="/companies" element={<CompanySelectionPage />} />
             <Route path="/questionnaire/:companyId" element={<QuestionnairePage />} />
             <Route path="/calculator/:companyId" element={<CalculatorPage />} />
+            <Route path="/warehouse-maps/:companyId" element={<WarehouseMapPage />} />
           </Routes>
         </Box>
       </Box>

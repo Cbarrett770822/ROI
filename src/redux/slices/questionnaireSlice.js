@@ -482,6 +482,216 @@ const mockQuestions = [
     suffix: '',
     placeholder: 'Enter implementation cost',
     defaultValue: 0
+  },
+
+  // Additional Warehouse Operations Questions
+  {
+    id: 'operations_intercompany',
+    category: 'Warehouse Operations',
+    text: 'How efficiently do you process intercompany deliveries?',
+    options: [
+      { value: '1', label: 'Inefficient - Long processing times with frequent delays' },
+      { value: '2', label: 'Moderate - Standard processing with occasional bottlenecks' },
+      { value: '3', label: 'Efficient - Streamlined processing with minimal delays' },
+      { value: '4', label: 'Highly Efficient - Optimized processing with priority handling' }
+    ]
+  },
+  {
+    id: 'operations_putaway',
+    category: 'Warehouse Operations',
+    text: 'How efficient is your put-away process?',
+    options: [
+      { value: '1', label: 'Inefficient - Manual put-away with frequent errors and delays' },
+      { value: '2', label: 'Basic - Semi-automated put-away with moderate efficiency' },
+      { value: '3', label: 'Efficient - Well-organized put-away with location optimization' },
+      { value: '4', label: 'Highly Efficient - Automated put-away with real-time optimization' }
+    ]
+  },
+  {
+    id: 'operations_cross_dock',
+    category: 'Warehouse Operations',
+    text: 'How effectively do you utilize cross-docking in your operations?',
+    options: [
+      { value: '1', label: 'Not utilized - No cross-docking capabilities' },
+      { value: '2', label: 'Limited - Occasional cross-docking for select products' },
+      { value: '3', label: 'Moderate - Regular cross-docking with dedicated area' },
+      { value: '4', label: 'Advanced - Systematic cross-docking with optimization algorithms' }
+    ]
+  },
+  {
+    id: 'operations_pick_errors',
+    category: 'Warehouse Operations',
+    text: 'How effectively do you manage and reduce pick errors?',
+    options: [
+      { value: '1', label: 'Poor - Frequent errors with minimal tracking' },
+      { value: '2', label: 'Basic - Manual error tracking with some improvement efforts' },
+      { value: '3', label: 'Good - Systematic error reduction with regular monitoring' },
+      { value: '4', label: 'Excellent - Advanced error prevention systems with near-zero error rates' }
+    ]
+  },
+  {
+    id: 'operations_customer_specs',
+    category: 'Warehouse Operations',
+    text: 'How well do your picking processes adhere to customer specifications?',
+    options: [
+      { value: '1', label: 'Poor - Frequent non-compliance with customer requirements' },
+      { value: '2', label: 'Basic - Manual checking of basic customer requirements' },
+      { value: '3', label: 'Good - Systematic processes to ensure compliance with specifications' },
+      { value: '4', label: 'Excellent - Automated systems ensuring perfect adherence to all specifications' }
+    ]
+  },
+  {
+    id: 'operations_outbound_time',
+    category: 'Warehouse Operations',
+    text: 'How efficiently do you process outbound deliveries?',
+    options: [
+      { value: '1', label: 'Slow - Long processing times with frequent delays' },
+      { value: '2', label: 'Moderate - Average processing times with occasional delays' },
+      { value: '3', label: 'Fast - Quick processing with rare delays' },
+      { value: '4', label: 'Very Fast - Optimized processing with minimal time' }
+    ]
+  },
+  {
+    id: 'operations_documentation',
+    category: 'Warehouse Operations',
+    text: 'How do you manage outbound documentation errors?',
+    options: [
+      { value: '1', label: 'Poor - Frequent documentation errors with minimal tracking' },
+      { value: '2', label: 'Basic - Manual error checking with some tracking' },
+      { value: '3', label: 'Good - Systematic processes to reduce documentation errors' },
+      { value: '4', label: 'Excellent - Automated systems with near-zero documentation errors' }
+    ]
+  },
+  {
+    id: 'operations_transport_bookings',
+    category: 'Warehouse Operations',
+    text: 'What percentage of your transport bookings are automated?',
+    options: [
+      { value: '1', label: 'Low - Less than 25% automated bookings' },
+      { value: '2', label: 'Moderate - 25-50% automated bookings' },
+      { value: '3', label: 'High - 50-75% automated bookings' },
+      { value: '4', label: 'Very High - More than 75% automated bookings' }
+    ]
+  },
+
+  // Quality Control Questions
+  {
+    id: 'quality_returns_time',
+    category: 'Warehouse Operations',
+    text: 'How quickly do you process supplier and customer returns?',
+    options: [
+      { value: '1', label: 'Slow - Long processing times with frequent backlogs' },
+      { value: '2', label: 'Moderate - Average processing times with occasional delays' },
+      { value: '3', label: 'Fast - Quick processing with dedicated returns area' },
+      { value: '4', label: 'Very Fast - Optimized returns processing with immediate disposition' }
+    ]
+  },
+  {
+    id: 'quality_quarantine',
+    category: 'Warehouse Operations',
+    text: 'How efficiently do you manage quarantined inventory?',
+    options: [
+      { value: '1', label: 'Poor - Long quarantine times with minimal tracking' },
+      { value: '2', label: 'Basic - Standard quarantine processes with manual tracking' },
+      { value: '3', label: 'Good - Efficient quarantine management with clear processes' },
+      { value: '4', label: 'Excellent - Optimized quarantine handling with minimal hold times' }
+    ]
+  },
+
+  // Inventory Accuracy Questions
+  {
+    id: 'inventory_sku_accuracy',
+    category: 'Inventory Management',
+    text: 'What is your current stock accuracy percentage by SKU quantity?',
+    options: [
+      { value: '1', label: 'Low - Less than 90% accuracy' },
+      { value: '2', label: 'Moderate - 90-95% accuracy' },
+      { value: '3', label: 'High - 95-98% accuracy' },
+      { value: '4', label: 'Very High - Greater than 98% accuracy' }
+    ]
+  },
+  {
+    id: 'inventory_location_accuracy',
+    category: 'Inventory Management',
+    text: 'What is your current stock accuracy percentage by SKU location?',
+    options: [
+      { value: '1', label: 'Low - Less than 85% accuracy' },
+      { value: '2', label: 'Moderate - 85-92% accuracy' },
+      { value: '3', label: 'High - 92-97% accuracy' },
+      { value: '4', label: 'Very High - Greater than 97% accuracy' }
+    ]
+  },
+  {
+    id: 'inventory_batch_accuracy',
+    category: 'Inventory Management',
+    text: 'What is your current stock accuracy percentage by serial/batch number?',
+    options: [
+      { value: '1', label: 'Low - Less than 85% accuracy' },
+      { value: '2', label: 'Moderate - 85-92% accuracy' },
+      { value: '3', label: 'High - 92-97% accuracy' },
+      { value: '4', label: 'Very High - Greater than 97% accuracy' }
+    ]
+  },
+
+  // Warehouse Infrastructure Questions
+  {
+    id: 'warehouse_travel_paths',
+    category: 'Warehouse Infrastructure',
+    text: 'How optimized are the travel paths in your warehouse?',
+    options: [
+      { value: '1', label: 'Poor - Long, inefficient travel paths with frequent congestion' },
+      { value: '2', label: 'Basic - Some optimization but still significant travel distances' },
+      { value: '3', label: 'Good - Well-designed paths with minimal congestion' },
+      { value: '4', label: 'Excellent - Highly optimized paths with data-driven layout adjustments' }
+    ]
+  },
+
+  // Logistics Questions
+  {
+    id: 'logistics_credit_shipments',
+    category: 'Logistics & Transportation',
+    text: 'How do you manage shipments to customers on credit hold?',
+    options: [
+      { value: '1', label: 'Poor - Frequent shipments to customers on credit hold' },
+      { value: '2', label: 'Basic - Manual credit checks with occasional errors' },
+      { value: '3', label: 'Good - Systematic credit verification before shipping' },
+      { value: '4', label: 'Excellent - Automated system preventing all shipments to customers on credit hold' }
+    ]
+  },
+  {
+    id: 'logistics_expedited',
+    category: 'Logistics & Transportation',
+    text: 'How effectively do you manage and reduce expedited deliveries?',
+    options: [
+      { value: '1', label: 'Poor - Frequent use of expedited shipping with minimal planning' },
+      { value: '2', label: 'Basic - Some efforts to reduce expedited shipments' },
+      { value: '3', label: 'Good - Proactive planning to minimize expedited deliveries' },
+      { value: '4', label: 'Excellent - Rare use of expedited shipping with robust planning systems' }
+    ]
+  },
+
+  // Technology Questions
+  {
+    id: 'technology_inventory_speed',
+    category: 'Technology & Automation',
+    text: 'How would you rate the speed of your inventory booking processes?',
+    options: [
+      { value: '1', label: 'Slow - Manual entry with significant delays' },
+      { value: '2', label: 'Moderate - Semi-automated with occasional bottlenecks' },
+      { value: '3', label: 'Fast - Automated with real-time updates' },
+      { value: '4', label: 'Very Fast - Fully automated with instant processing' }
+    ]
+  },
+  {
+    id: 'technology_paperwork',
+    category: 'Technology & Automation',
+    text: 'To what extent have you reduced paperwork in your warehouse operations?',
+    options: [
+      { value: '1', label: 'Minimal - Primarily paper-based processes' },
+      { value: '2', label: 'Partial - Mix of paper and digital documentation' },
+      { value: '3', label: 'Significant - Mostly digital with limited paper use' },
+      { value: '4', label: 'Complete - Fully paperless operation' }
+    ]
   }
 ];
 

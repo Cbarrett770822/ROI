@@ -32,6 +32,7 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DownloadIcon from '@mui/icons-material/Download';
 import InfoIcon from '@mui/icons-material/Info';
+import MapIcon from '@mui/icons-material/Map';
 import WarehouseIcon from '@mui/icons-material/Warehouse';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import PeopleIcon from '@mui/icons-material/People';
@@ -111,6 +112,12 @@ const CalculatorPage = () => {
   const handleBackToQuestionnaire = () => {
     dispatch(setLoading(true));
     navigate(`/questionnaire/${companyId}`);
+  };
+  
+  // Navigate to warehouse maps
+  const handleViewWarehouseMaps = () => {
+    dispatch(setLoading(true));
+    navigate(`/warehouse-maps/${companyId}`);
   };
   
   // State for notification
@@ -462,6 +469,15 @@ const CalculatorPage = () => {
               onClick={handleDownloadReport}
             >
               Download Report
+            </Button>
+            
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<MapIcon />}
+              onClick={handleViewWarehouseMaps}
+            >
+              Warehouse Maps
             </Button>
             
             <Button

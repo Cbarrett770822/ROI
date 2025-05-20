@@ -376,7 +376,7 @@ const QuestionnairePage = () => {
                               onChange={(e) => handleAnswerChange(question.id, e.target.value)}
                               sx={{ mt: 1 }}
                             >
-                              {question.options.map((option) => (
+                              {question.options && question.options.map((option) => (
                                 <FormControlLabel
                                   key={option.value}
                                   value={option.value}
