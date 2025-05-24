@@ -247,15 +247,30 @@ export const calculateAreaMaturity = (outcomeData) => {
     let count = 0;
     
     outcomes.forEach(outcomeId => {
-      if (outcomeData[outcomeId]) {
-        totalScore += outcomeData[outcomeId];
-        count++;
+      if (outcomeData[outcomeId] !== undefined && outcomeData[outcomeId] !== null) {
+        // Ensure the value is a number and within range
+        const value = parseFloat(outcomeData[outcomeId]);
+        if (!isNaN(value)) {
+          // Cap the value between 0 and 4
+          const cappedValue = Math.min(4, Math.max(0, value));
+          totalScore += cappedValue;
+          count++;
+          
+          // Log if the original value was out of range
+          if (value !== cappedValue) {
+            console.warn(`Outcome ${outcomeId} for area ${area} had value ${value} which was capped to ${cappedValue}`);
+          }
+        } else {
+          console.warn(`Outcome ${outcomeId} for area ${area} had non-numeric value: ${outcomeData[outcomeId]}`);
+        }
       }
     });
     
     // Calculate average if there are scores
     if (count > 0) {
-      areaMaturity[area] = totalScore / count;
+      // Ensure the final average is also capped between 0 and 4
+      const average = totalScore / count;
+      areaMaturity[area] = Math.min(4, Math.max(0, average));
     } else {
       areaMaturity[area] = 0;
     }

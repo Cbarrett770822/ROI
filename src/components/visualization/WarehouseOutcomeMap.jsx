@@ -163,9 +163,9 @@ const WarehouseOutcomeMap = ({ assessmentData }) => {
       </Typography>
       
       {/* Outcome map grid */}
-      <Grid container spacing={1}>
+      <Grid container spacing={2}>
         {Object.values(outcomeMapStructure).map((section) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={section.title}>
+          <Grid item xs={12} sm={12} md={4} key={section.title}>
             <Paper 
               elevation={0} 
               sx={{ 
@@ -201,14 +201,16 @@ const WarehouseOutcomeMap = ({ assessmentData }) => {
                       elevation={0}
                       sx={{ 
                         bgcolor: getCellColor(outcome.id),
-                        p: 1,
-                        mb: 1,
+                        p: 1.5,
+                        mb: 1.5,
                         border: '1px solid #ddd',
-                        minHeight: 60,
+                        height: 100,
+                        width: '100%',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        textAlign: 'center'
+                        textAlign: 'center',
+                        overflow: 'hidden'
                       }}
                     >
                       <Typography variant="body2">

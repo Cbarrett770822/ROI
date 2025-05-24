@@ -3,7 +3,7 @@
     "metrics_1": "500",
     "metrics_2": "2",
     "metrics_3": "50",
-    "metrics_4": "600",
+    "metrics_4": "12",
     "metrics_5": "0.1",
     "metrics_6": "0.1",
     "metrics_7": "4",
@@ -62,5 +62,5 @@
     "logistics_credit_shipments": "1",
     "logistics_expedited": "1"
   },
-  "updatedAt": "2025-05-24T05:34:27.872Z"
+  "updatedAt": "2025-05-24T22:34:09.024Z"
 }

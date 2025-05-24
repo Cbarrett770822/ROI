@@ -50,6 +50,7 @@ import { setLoading } from '../redux/slices/uiSlice';
 
 // Import utilities
 import { generatePDFReport } from '../utils/pdfReportGenerator';
+import { generatePPTXReport } from '../utils/pptxReportGenerator';
 
 const CalculatorPage = () => {
   const { companyId } = useParams();
@@ -129,8 +130,8 @@ const CalculatorPage = () => {
     setNotification({ ...notification, open: false });
   };
 
-  // Handle report download
-  const handleDownloadReport = () => {
+  // Handle PDF report download
+  const handleDownloadPdfReport = () => {
     try {
       console.log('Active company:', activeCompany);
       console.log('Results:', results);
@@ -155,17 +156,66 @@ const CalculatorPage = () => {
       // Show success notification
       setNotification({
         open: true,
-        message: 'Report downloaded successfully!'
+        message: 'PDF report downloaded successfully!'
       });
     } catch (error) {
-      console.error('Error generating report:', error);
+      console.error('Error generating PDF report:', error);
       console.error('Error details:', error.message, error.stack);
       
       // Show error notification
       setNotification({
         open: true,
-        message: 'Error generating report. Please try again.'
+        message: 'Error generating PDF report. Please try again.'
       });
+    }
+  };
+
+  // Handle PowerPoint report download
+  const handleDownloadPptxReport = () => {
+    try {
+      console.log('Active company:', activeCompany);
+      console.log('Results:', results);
+      
+      // Prepare data for the PowerPoint report
+      const reportData = {
+        company: activeCompany,
+        results: results
+      };
+      
+      console.log('Report data prepared for PPTX:', reportData);
+      
+      // Generate the PowerPoint report
+      const pptx = generatePPTXReport(reportData);
+      
+      console.log('PowerPoint presentation generated successfully');
+      
+      // Save the PowerPoint file
+      const fileName = `${activeCompany.name.replace(/\s+/g, '_')}_Supply_Chain_Assessment_${new Date().toISOString().split('T')[0]}`;
+      pptx.writeFile({ fileName: fileName });
+      
+      // Show success notification
+      setNotification({
+        open: true,
+        message: 'PowerPoint presentation downloaded successfully!'
+      });
+    } catch (error) {
+      console.error('Error generating PowerPoint report:', error);
+      console.error('Error details:', error.message, error.stack);
+      
+      // Show error notification
+      setNotification({
+        open: true,
+        message: 'Error generating PowerPoint report. Please try again.'
+      });
+    }
+  };
+  
+  // Combined function to handle report downloads
+  const handleDownloadReport = (format = 'pdf') => {
+    if (format === 'pptx') {
+      handleDownloadPptxReport();
+    } else {
+      handleDownloadPdfReport();
     }
   };
 
@@ -646,14 +696,25 @@ const CalculatorPage = () => {
           </Box>
           
           <Box sx={{ display: 'flex', gap: 2, mt: { xs: 2, md: 0 } }}>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<DownloadIcon />}
-              onClick={handleDownloadReport}
-            >
-              Download Report
-            </Button>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<DownloadIcon />}
+                onClick={() => handleDownloadReport('pdf')}
+              >
+                PDF Report
+              </Button>
+              
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<DownloadIcon />}
+                onClick={() => handleDownloadReport('pptx')}
+              >
+                PowerPoint
+              </Button>
+            </Box>
             
             <Button
               variant="contained"

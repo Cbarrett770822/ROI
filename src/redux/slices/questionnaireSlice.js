@@ -7,12 +7,14 @@ const mockQuestions = [
   {
     id: 'metrics_1',
     category: 'Financial & Operational Metrics',
-    text: 'What is your company\'s annual revenue?',
+    text: 'What is your company\'s annual revenue? (in millions)',
     type: 'number',
     prefix: '$',
-    suffix: '',
-    placeholder: 'Enter annual revenue',
-    defaultValue: 0
+    suffix: ' million',
+    placeholder: 'Enter revenue in millions',
+    defaultValue: 0,
+    unit: 'millions', // Add unit information
+    helpText: 'Enter the value in millions (e.g., for $10 million, enter 10)'
   },
   {
     id: 'metrics_2',
@@ -37,32 +39,38 @@ const mockQuestions = [
   {
     id: 'metrics_4',
     category: 'Financial & Operational Metrics',
-    text: 'What is the fully loaded annual cost per warehouse employee (including benefits, taxes, etc.)?',
+    text: 'What is the average annual cost per FTE (including benefits)? (in thousands)',
     type: 'number',
     prefix: '$',
-    suffix: '',
-    placeholder: 'Enter cost per FTE',
-    defaultValue: 0
+    suffix: 'K',
+    placeholder: 'Enter cost in thousands',
+    defaultValue: 0,
+    unit: 'thousands', // Add unit information
+    helpText: 'Enter the value in thousands (e.g., for $50,000, enter 50)'
   },
   {
     id: 'metrics_5',
     category: 'Financial & Operational Metrics',
-    text: 'What is the annual value of waste/damaged/obsolete inventory?',
+    text: 'What is the annual value of waste/damaged/obsolete inventory? (in millions)',
     type: 'number',
     prefix: '$',
-    suffix: '',
-    placeholder: 'Enter annual waste value',
-    defaultValue: 0
+    suffix: ' million',
+    placeholder: 'Enter value in millions',
+    defaultValue: 0,
+    unit: 'millions', // Add unit information
+    helpText: 'Enter the value in millions (e.g., for $2 million, enter 2)'
   },
   {
     id: 'metrics_6',
     category: 'Financial & Operational Metrics',
-    text: 'What is your annual transportation cost?',
+    text: 'What is your annual transportation cost? (in millions)',
     type: 'number',
     prefix: '$',
-    suffix: '',
-    placeholder: 'Enter transportation cost',
-    defaultValue: 0
+    suffix: ' million',
+    placeholder: 'Enter cost in millions',
+    defaultValue: 0,
+    unit: 'millions', // Add unit information
+    helpText: 'Enter the value in millions (e.g., for $5 million, enter 5)'
   },
   {
     id: 'metrics_7',
@@ -466,22 +474,26 @@ const mockQuestions = [
   {
     id: 'implementation_1',
     category: 'Implementation Costs',
-    text: 'What is the estimated license cost for the supply chain management solution?',
+    text: 'What is the estimated license cost for the supply chain management solution? (in millions)',
     type: 'number',
     prefix: '$',
-    suffix: '',
-    placeholder: 'Enter license cost',
-    defaultValue: 0
+    suffix: ' million',
+    placeholder: 'Enter cost in millions',
+    defaultValue: 0,
+    unit: 'millions',
+    helpText: 'Enter the value in millions (e.g., for $1 million, enter 1)'
   },
   {
     id: 'implementation_2',
     category: 'Implementation Costs',
-    text: 'What is the estimated implementation cost for the supply chain management solution?',
+    text: 'What is the estimated implementation cost for the supply chain management solution? (in millions)',
     type: 'number',
     prefix: '$',
-    suffix: '',
-    placeholder: 'Enter implementation cost',
-    defaultValue: 0
+    suffix: ' million',
+    placeholder: 'Enter cost in millions',
+    defaultValue: 0,
+    unit: 'millions', // Add unit information
+    helpText: 'Enter the value in millions (e.g., for $2 million, enter 2)'
   },
 
   // Additional Warehouse Operations Questions
@@ -696,26 +708,36 @@ const mockQuestions = [
 ];
 
 // Helper functions for localStorage persistence
-const getAnswersFromStorage = (companyId) => {
-  try {
-    const storedData = localStorage.getItem(`questionnaire_answers_${companyId}`);
-    if (storedData) {
-      return JSON.parse(storedData);
-    }
-  } catch (error) {
-    console.error(`Error loading answers for company ${companyId}:`, error);
+// API endpoints
+const API_URL = 'http://localhost:3001/api';
+
+// Helper function to handle API errors
+const handleApiError = (error) => {
+  console.error('API Error:', error);
+  if (error.response) {
+    // The request was made and the server responded with a status code
+    // that falls out of the range of 2xx
+    console.error('Response data:', error.response.data);
+    console.error('Response status:', error.response.status);
+    return error.response.data.error || 'Server error';
+  } else if (error.request) {
+    // The request was made but no response was received
+    console.error('No response received:', error.request);
+    return 'No response from server';
+  } else {
+    // Something happened in setting up the request that triggered an Error
+    console.error('Request error:', error.message);
+    return error.message;
   }
-  return {};
 };
 
-const saveAnswersToStorage = (companyId, answers) => {
-  try {
-    localStorage.setItem(`questionnaire_answers_${companyId}`, JSON.stringify(answers));
-    return true;
-  } catch (error) {
-    console.error(`Error saving answers for company ${companyId}:`, error);
-    return false;
-  }
+// Default categories for questions that don't have them
+const defaultCategories = {
+  q1: 'Supply Chain Visibility',
+  q2: 'Procurement & Sourcing',
+  q3: 'Inventory Management',
+  q4: 'Supplier Management',
+  q5: 'Risk Management'
 };
 
 // Async thunks for data operations
@@ -727,15 +749,20 @@ export const fetchQuestionnaire = createAsyncThunk(
         return rejectWithValue('Company ID is required');
       }
       
-      // Load answers from localStorage
-      const answers = getAnswersFromStorage(companyId);
+      // Load questionnaire from API
+      const response = await axios.get(`${API_URL}/questionnaire/${companyId}`);
       
+      // Get answers from the API response
+      const answers = response.data.answers || {};
+      
+      // Use the comprehensive mock questions instead of the limited server questions
+      // This ensures we have all the assessment categories and questions needed for ROI calculation
       return {
         questions: mockQuestions,
         answers: answers
       };
     } catch (error) {
-      return rejectWithValue('Failed to fetch questionnaire');
+      return rejectWithValue(handleApiError(error) || 'Failed to fetch questionnaire');
     }
   }
 );
@@ -748,16 +775,12 @@ export const saveQuestionnaireAnswers = createAsyncThunk(
         return rejectWithValue('Company ID is required');
       }
       
-      // Save answers to localStorage
-      const success = saveAnswersToStorage(companyId, answers);
+      // Save answers to API
+      const response = await axios.post(`${API_URL}/questionnaire/${companyId}`, { answers });
       
-      if (!success) {
-        return rejectWithValue('Failed to save answers to storage');
-      }
-      
-      return { success: true, companyId, timestamp: new Date().toISOString() };
+      return response.data;
     } catch (error) {
-      return rejectWithValue('Failed to save answers');
+      return rejectWithValue(handleApiError(error) || 'Failed to save answers');
     }
   }
 );

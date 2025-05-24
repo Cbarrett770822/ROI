@@ -1,13 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const Questionnaire = require('../models/Questionnaire');
-const Question = require('../models/Question');
-const mongoose = require('mongoose');
+const companyDataService = require('../services/companyDataService');
 
-// Predefined questions (will be seeded to the database)
+// Predefined questions (will be used directly instead of from a database)
 const predefinedQuestions = [
   {
     id: 'q1',
+    category: 'Supply Chain Visibility',
     text: 'How would you rate your current supply chain visibility?',
     options: [
       { value: '1', label: 'Poor - Limited visibility across the supply chain' },
@@ -18,6 +17,7 @@ const predefinedQuestions = [
   },
   {
     id: 'q2',
+    category: 'Procurement & Sourcing',
     text: 'What level of automation exists in your procurement processes?',
     options: [
       { value: '1', label: 'Minimal - Mostly manual processes' },
@@ -28,6 +28,7 @@ const predefinedQuestions = [
   },
   {
     id: 'q3',
+    category: 'Inventory Management',
     text: 'How effectively do you manage inventory levels?',
     options: [
       { value: '1', label: 'Ineffective - Frequent stockouts or excess inventory' },
@@ -38,6 +39,7 @@ const predefinedQuestions = [
   },
   {
     id: 'q4',
+    category: 'Supplier Management',
     text: 'How would you describe your supplier relationship management?',
     options: [
       { value: '1', label: 'Transactional - Limited communication with suppliers' },
@@ -48,6 +50,7 @@ const predefinedQuestions = [
   },
   {
     id: 'q5',
+    category: 'Risk Management',
     text: 'How resilient is your supply chain to disruptions?',
     options: [
       { value: '1', label: 'Vulnerable - Major disruptions cause significant issues' },
@@ -58,22 +61,7 @@ const predefinedQuestions = [
   }
 ];
 
-// Seed questions to the database if they don't exist
-const seedQuestions = async () => {
-  try {
-    const existingQuestions = await Question.find();
-    
-    if (existingQuestions.length === 0) {
-      await Question.insertMany(predefinedQuestions);
-      console.log('Questions seeded to database');
-    }
-  } catch (err) {
-    console.error('Error seeding questions:', err);
-  }
-};
-
-// Call the seed function when the module is loaded
-seedQuestions();
+// No need to seed questions to a database, we'll use the predefined questions directly
 
 // GET questionnaire for a company
 router.get('/:companyId', async (req, res) => {
@@ -81,28 +69,23 @@ router.get('/:companyId', async (req, res) => {
     const { companyId } = req.params;
     
     // Validate companyId
-    if (!mongoose.Types.ObjectId.isValid(companyId)) {
+    if (!companyId || companyId.trim() === '') {
       return res.status(400).json({ error: 'Invalid company ID' });
     }
     
-    // Get all questions
-    const questions = await Question.find().sort({ id: 1 });
-    
     // Get existing answers for this company
-    let questionnaire = await Questionnaire.findOne({ companyId });
-    
-    // If no questionnaire exists for this company, create an empty one
-    if (!questionnaire) {
-      questionnaire = {
-        companyId,
-        answers: {}
-      };
+    let companyData;
+    try {
+      companyData = await companyDataService.getCompanyData(companyId);
+    } catch (err) {
+      // If there's an error or no data exists, create empty data
+      companyData = { answers: {} };
     }
     
     // Return questions and answers
     res.json({
-      questions,
-      answers: questionnaire.answers || {}
+      questions: predefinedQuestions,
+      answers: companyData.answers || {}
     });
   } catch (err) {
     console.error('Error fetching questionnaire:', err);
@@ -117,7 +100,7 @@ router.post('/:companyId', async (req, res) => {
     const { answers } = req.body;
     
     // Validate companyId
-    if (!mongoose.Types.ObjectId.isValid(companyId)) {
+    if (!companyId || companyId.trim() === '') {
       return res.status(400).json({ error: 'Invalid company ID' });
     }
     
@@ -126,24 +109,26 @@ router.post('/:companyId', async (req, res) => {
       return res.status(400).json({ error: 'Invalid answers format' });
     }
     
-    // Find existing questionnaire or create a new one
-    let questionnaire = await Questionnaire.findOne({ companyId });
-    
-    if (questionnaire) {
-      // Update existing questionnaire
-      questionnaire.answers = answers;
-      questionnaire.updatedAt = Date.now();
-      await questionnaire.save();
-    } else {
-      // Create new questionnaire
-      questionnaire = new Questionnaire({
-        companyId,
-        answers
-      });
-      await questionnaire.save();
+    // Get existing company data or create new
+    let companyData;
+    try {
+      companyData = await companyDataService.getCompanyData(companyId);
+    } catch (err) {
+      companyData = {};
     }
     
-    res.json({ success: true, message: 'Answers saved successfully' });
+    // Update answers
+    companyData.answers = answers;
+    companyData.updatedAt = new Date().toISOString();
+    
+    // Save to file
+    const success = await companyDataService.saveCompanyData(companyId, companyData);
+    
+    if (success) {
+      res.json({ success: true, message: 'Answers saved successfully' });
+    } else {
+      res.status(500).json({ error: 'Failed to save answers' });
+    }
   } catch (err) {
     console.error('Error saving questionnaire answers:', err);
     res.status(500).json({ error: 'Failed to save answers' });

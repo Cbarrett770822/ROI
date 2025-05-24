@@ -248,7 +248,7 @@ const QuestionnairePage = () => {
         ) : (
           <Grid container spacing={3}>
             {/* Categories */}
-            <Grid item xs={12} md={2}>
+            <Grid grid={{ xs: 12, md: 2 }}>
               <Box sx={{ position: { md: 'sticky' }, top: { md: 24 } }}>
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                   Assessment Categories
@@ -326,7 +326,7 @@ const QuestionnairePage = () => {
             </Grid>
             
             {/* Questions */}
-            <Grid item xs={12} md={10}>
+            <Grid grid={{ xs: 12, md: 10 }}>
               {activeCategory && (
                 <Card elevation={2} sx={{ mb: 4 }}>
                   <CardContent sx={{ px: { xs: 2, md: 4 } }}>

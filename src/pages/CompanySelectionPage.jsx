@@ -328,7 +328,7 @@ const CompanySelectionPage = () => {
           {/* Companies Grid */}
           <Grid container spacing={3}>
             {filteredCompanies.map((company) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={company.id}>
+              <Grid grid={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={company.id}>
                 <Card 
                   sx={{ 
                     height: '100%', 

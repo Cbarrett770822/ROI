@@ -50,7 +50,7 @@ const HomePage = () => {
       >
         <Container maxWidth="lg">
           <Grid container spacing={4} alignItems="center">
-            <Grid item xs={12} md={7}>
+            <Grid grid={{ xs: 12, md: 7 }}>
               <Typography 
                 variant="h2" 
                 component="h1" 
@@ -91,7 +91,7 @@ const HomePage = () => {
                 Get Started
               </Button>
             </Grid>
-            <Grid item xs={12} md={5}>
+            <Grid grid={{ xs: 12, md: 5 }}>
               <Box sx={{ 
                 position: 'relative', 
                 height: { xs: '300px', md: '400px' },

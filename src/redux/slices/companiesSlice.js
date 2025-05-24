@@ -1,45 +1,28 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
+import axios from 'axios';
 import { exportDataToFile, importDataFromFile } from '../../utils/exportData';
 
-// Helper function to load companies from localStorage
-const loadCompaniesFromStorage = () => {
-  try {
-    const storedCompanies = localStorage.getItem('companies');
-    if (storedCompanies) {
-      return JSON.parse(storedCompanies);
-    }
-    
-    // Default companies if none in storage
-    const defaultCompanies = [
-      { id: '1', name: 'Acme Corporation' },
-      { id: '2', name: 'Globex Industries' },
-      { id: '3', name: 'Stark Enterprises' }
-    ];
-    
-    // Save default companies to localStorage
-    localStorage.setItem('companies', JSON.stringify(defaultCompanies));
-    console.log('Saved default companies to localStorage');
-    
-    return defaultCompanies;
-  } catch (error) {
-    console.error('Error loading companies from localStorage:', error);
-    
-    // Fallback if there's an error
-    return [
-      { id: '1', name: 'Acme Corporation' },
-      { id: '2', name: 'Globex Industries' },
-      { id: '3', name: 'Stark Enterprises' }
-    ];
-  }
-};
+// API endpoints for companies
+const API_URL = 'http://localhost:3001/api';
 
-// Helper function to save companies to localStorage
-const saveCompaniesToStorage = (companies) => {
-  try {
-    localStorage.setItem('companies', JSON.stringify(companies));
-  } catch (error) {
-    console.error('Error saving companies to localStorage:', error);
+// Helper function to handle API errors
+const handleApiError = (error) => {
+  console.error('API Error:', error);
+  if (error.response) {
+    // The request was made and the server responded with a status code
+    // that falls out of the range of 2xx
+    console.error('Response data:', error.response.data);
+    console.error('Response status:', error.response.status);
+    return error.response.data.error || 'Server error';
+  } else if (error.request) {
+    // The request was made but no response was received
+    console.error('No response received:', error.request);
+    return 'No response from server';
+  } else {
+    // Something happened in setting up the request that triggered an Error
+    console.error('Request error:', error.message);
+    return error.message;
   }
 };
 
@@ -48,18 +31,16 @@ export const initializeApp = createAsyncThunk(
   'companies/initializeApp',
   async (_, { dispatch, rejectWithValue }) => {
     try {
-      // Load companies from localStorage
-      const companies = loadCompaniesFromStorage();
-      
-      // Ensure companies are saved to localStorage
-      saveCompaniesToStorage(companies);
+      // Load companies from API
+      const response = await axios.get(`${API_URL}/companies`);
+      const companies = response.data;
       
       console.log('App initialized with companies:', companies);
       
       return companies;
     } catch (error) {
       console.error('Failed to initialize app:', error);
-      return rejectWithValue('Failed to initialize app');
+      return rejectWithValue(handleApiError(error) || 'Failed to initialize app');
     }
   }
 );
@@ -68,159 +49,228 @@ export const fetchCompanies = createAsyncThunk(
   'companies/fetchCompanies',
   async (_, { rejectWithValue }) => {
     try {
-      // Load companies from localStorage
-      return loadCompaniesFromStorage();
+      // Load companies from API
+      const response = await axios.get(`${API_URL}/companies`);
+      return response.data;
     } catch (error) {
-      return rejectWithValue('Failed to fetch companies');
+      return rejectWithValue(handleApiError(error) || 'Failed to fetch companies');
     }
   }
 );
 
 export const createCompany = createAsyncThunk(
   'companies/createCompany',
-  async (name, { getState, rejectWithValue }) => {
+  async (name, { rejectWithValue }) => {
     try {
-      // Create a new company with a unique ID
-      const newCompany = {
-        id: uuidv4(),
-        name,
-        createdAt: new Date().toISOString()
-      };
-      
-      // Get current companies and add the new one
-      const currentCompanies = getState().companies.companies;
-      const updatedCompanies = [...currentCompanies, newCompany];
-      
-      // Save to localStorage
-      saveCompaniesToStorage(updatedCompanies);
-      
-      return newCompany;
+      // Create a new company via API
+      const response = await axios.post(`${API_URL}/companies`, { name });
+      return response.data;
     } catch (error) {
-      return rejectWithValue('Failed to create company');
+      return rejectWithValue(handleApiError(error) || 'Failed to create company');
+    }
+  }
+);
+
+export const updateCompany = createAsyncThunk(
+  'companies/updateCompany',
+  async ({ id, name }, { rejectWithValue }) => {
+    try {
+      // Update company via API
+      const response = await axios.put(`${API_URL}/companies/${id}`, { name });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(handleApiError(error) || 'Failed to update company');
     }
   }
 );
 
 export const deleteCompany = createAsyncThunk(
   'companies/deleteCompany',
-  async (companyId, { getState, rejectWithValue }) => {
+  async (id, { rejectWithValue }) => {
     try {
-      // Get current companies and filter out the one to delete
-      const currentCompanies = getState().companies.companies;
-      const updatedCompanies = currentCompanies.filter(company => company.id !== companyId);
-      
-      // Save to localStorage
-      saveCompaniesToStorage(updatedCompanies);
-      
-      // Remove questionnaire answers for this company
-      try {
-        localStorage.removeItem(`questionnaire_answers_${companyId}`);
-      } catch (error) {
-        console.error(`Error removing answers for company ${companyId}:`, error);
-      }
-      
-      return { companyId, success: true };
+      // Delete company via API
+      await axios.delete(`${API_URL}/companies/${id}`);
+      return id;
     } catch (error) {
-      return rejectWithValue('Failed to delete company');
+      return rejectWithValue(handleApiError(error) || 'Failed to delete company');
     }
   }
 );
 
+// Get company data (questionnaire answers, etc.)
+export const getCompanyData = createAsyncThunk(
+  'companies/getCompanyData',
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${API_URL}/companies/${id}/data`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(handleApiError(error) || 'Failed to get company data');
+    }
+  }
+);
+
+// Save company data
+export const saveCompanyData = createAsyncThunk(
+  'companies/saveCompanyData',
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_URL}/companies/${id}/data`, data);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(handleApiError(error) || 'Failed to save company data');
+    }
+  }
+);
+
+// Delete all data
 export const deleteAllData = createAsyncThunk(
   'companies/deleteAllData',
-  async (_, { getState, rejectWithValue }) => {
+  async (_, { dispatch, getState, rejectWithValue }) => {
     try {
-      // Get current companies to remove their questionnaire data
-      const currentCompanies = getState().companies.companies;
+      // Get current companies to delete their data
+      const companies = getState().companies.companies;
       
-      // Remove all questionnaire answers
-      currentCompanies.forEach(company => {
-        try {
-          localStorage.removeItem(`questionnaire_answers_${company.id}`);
-        } catch (error) {
-          console.error(`Error removing answers for company ${company.id}:`, error);
-        }
-      });
-      
-      // Clear companies from localStorage
-      localStorage.removeItem('companies');
+      // Delete each company (which will also delete their data files)
+      for (const company of companies) {
+        await dispatch(deleteCompany(company.id)).unwrap();
+      }
       
       return { success: true };
     } catch (error) {
-      return rejectWithValue('Failed to delete all data');
+      return rejectWithValue(handleApiError(error) || 'Failed to delete all data');
     }
   }
 );
 
+// Export all data
 export const exportAllData = createAsyncThunk(
   'companies/exportAllData',
   async (_, { getState, rejectWithValue }) => {
     try {
-      const state = getState();
-      const companies = state.companies.companies;
+      // Get companies from state
+      const companies = getState().companies.companies;
       
-      console.log('Exporting companies:', companies);
-      
-      // Get all questionnaire answers for all companies
+      // Prepare answers object
       const answers = {};
-      companies.forEach(company => {
-        // Get answers from localStorage
+      
+      // For each company, get their questionnaire data
+      for (const company of companies) {
         try {
-          const storedData = localStorage.getItem(`questionnaire_answers_${company.id}`);
-          if (storedData) {
-            answers[company.id] = JSON.parse(storedData);
-            console.log(`Loaded answers for company ${company.id}`);
-          } else {
-            console.log(`No answers found for company ${company.id}`);
+          const response = await axios.get(`${API_URL}/companies/${company.id}/data`);
+          if (response.data && response.data.answers) {
+            answers[company.id] = response.data.answers;
           }
         } catch (error) {
-          console.error(`Error loading answers for company ${company.id}:`, error);
+          console.error(`Error fetching data for company ${company.id}:`, error);
+          // Continue with other companies even if one fails
         }
-      });
-      
-      console.log('Exporting answers:', answers);
-      
-      // Export data to file
-      const exportData = { companies, answers };
-      console.log('Full export data:', exportData);
-      
-      const success = exportDataToFile(exportData);
-      
-      if (!success) {
-        console.error('Export failed');
-        return rejectWithValue('Failed to export data');
       }
       
-      console.log('Export successful');
+      // Export the data to a file
+      const exportSuccess = exportDataToFile({ companies, answers });
+      
+      if (!exportSuccess) {
+        return rejectWithValue('Failed to export data to file');
+      }
+      
       return { success: true };
     } catch (error) {
-      console.error('Export error:', error);
-      return rejectWithValue('Failed to export data');
+      return rejectWithValue(handleApiError(error) || 'Failed to export data');
     }
   }
 );
 
+// Export questionnaire to Excel
+export const exportQuestionnaireToExcel = createAsyncThunk(
+  'companies/exportQuestionnaireToExcel',
+  async ({ companyId, questions }, { getState, rejectWithValue }) => {
+    try {
+      // Get company data
+      let companyName = 'Company';
+      let answers = {};
+      
+      // If company ID is provided, get specific company data
+      if (companyId) {
+        try {
+          // Get company name
+          const companies = getState().companies.companies;
+          const company = companies.find(c => c.id === companyId);
+          if (company) {
+            companyName = company.name;
+          }
+          
+          // Get company answers
+          const response = await axios.get(`${API_URL}/companies/${companyId}/data`);
+          if (response.data && response.data.answers) {
+            answers = response.data.answers;
+          }
+        } catch (error) {
+          console.error(`Error fetching data for company ${companyId}:`, error);
+          // Continue even if there's an error
+        }
+      }
+      
+      // Import the Excel exporter dynamically to avoid issues with SSR
+      const { exportQuestionnaireToExcel } = await import('../../utils/excelExporter');
+      
+      // Generate the Excel file - note that this is now an async function
+      const excelBlob = await exportQuestionnaireToExcel(questions, answers, companyName);
+      
+      console.log('Excel blob generated:', excelBlob);
+      
+      // Create a URL for the blob
+      const url = URL.createObjectURL(excelBlob);
+      
+      // Create a download link
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${companyName.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-questionnaire-${new Date().toISOString().split('T')[0]}.xlsx`;
+      
+      // Append to the body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Revoke the URL to free up memory
+      URL.revokeObjectURL(url);
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error exporting questionnaire to Excel:', error);
+      return rejectWithValue(handleApiError(error) || 'Failed to export questionnaire to Excel');
+    }
+  }
+);
+
+// Import all data
 export const importAllData = createAsyncThunk(
   'companies/importAllData',
   async (file, { dispatch, rejectWithValue }) => {
     try {
-      const data = await importDataFromFile(file);
+      // Import data from file
+      const importedData = await importDataFromFile(file);
       
-      // Save companies to localStorage
-      saveCompaniesToStorage(data.companies);
+      // Delete existing data first
+      await dispatch(deleteAllData()).unwrap();
       
-      // Save answers for each company to localStorage
-      Object.entries(data.answers).forEach(([companyId, answers]) => {
-        try {
-          localStorage.setItem(`questionnaire_answers_${companyId}`, JSON.stringify(answers));
-        } catch (error) {
-          console.error(`Error saving answers for company ${companyId}:`, error);
+      // Import companies
+      for (const company of importedData.companies) {
+        // Create the company
+        const newCompany = await dispatch(createCompany(company.name)).unwrap();
+        
+        // If this company has answers, save them
+        if (importedData.answers[company.id]) {
+          await dispatch(saveCompanyData({
+            id: newCompany.id,
+            data: { answers: importedData.answers[company.id] }
+          })).unwrap();
         }
-      });
+      }
       
-      return data;
+      return { success: true };
     } catch (error) {
-      return rejectWithValue('Failed to import data: ' + error.message);
+      return rejectWithValue(error.message || 'Failed to import data');
     }
   }
 );

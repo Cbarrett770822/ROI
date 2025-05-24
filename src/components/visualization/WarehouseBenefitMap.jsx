@@ -109,7 +109,7 @@ const WarehouseBenefitMap = ({ benefitData }) => {
       {/* Benefit map grid */}
       <Grid container spacing={1}>
         {Object.values(benefitMapStructure).map((section) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={section.title}>
+          <Grid grid={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={section.title}>
             <Paper 
               elevation={0} 
               sx={{ 
