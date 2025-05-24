@@ -1,11 +1,23 @@
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose');
 require('dotenv').config();
 
-// Import routes
+// Mock mongoose for compatibility with model files
+global.mongoose = {
+  Schema: function() {
+    return {
+      obj: {},
+    };
+  },
+  model: function() {
+    return {};
+  }
+};
+
+// Import routes and services
 const companiesRoutes = require('./routes/companies');
 const questionnaireRoutes = require('./routes/questionnaire');
+const companyDataService = require('./services/companyDataService');
 
 // Initialize express app
 const app = express();
@@ -24,28 +36,22 @@ app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Server is running' });
 });
 
-// Connect to MongoDB (using in-memory MongoDB for simplicity in this example)
-// In a real application, you would connect to a real MongoDB instance
-mongoose.connect('mongodb://localhost:27017/supply-chain-assessment', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  console.log('Connected to MongoDB');
-  
-  // Start the server
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-})
-.catch(err => {
-  console.error('Failed to connect to MongoDB', err);
-  
-  // If MongoDB connection fails, we'll use in-memory data for this example
-  console.log('Using in-memory data storage instead');
-  
-  // Start the server anyway
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT} (with in-memory data)`);
-  });
-});
+// Initialize data directory and start server
+async function startServer() {
+  try {
+    // Initialize the data directory and default files
+    await companyDataService.initDataDirectory();
+    console.log('Data directory initialized successfully');
+    
+    // Start the server
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT} (with file-based storage)`);
+    });
+  } catch (err) {
+    console.error('Failed to initialize data directory:', err);
+    process.exit(1);
+  }
+}
+
+// Start the server
+startServer();
