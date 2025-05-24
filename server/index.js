@@ -2,26 +2,6 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-// Mock mongoose for compatibility with model files
-global.mongoose = {
-  Schema: function() {
-    return {
-      obj: {},
-    };
-  },
-  model: function(modelName) {
-    // Return a mock model with common methods
-    return {
-      find: () => Promise.resolve([]),
-      findOne: () => Promise.resolve(null),
-      findById: () => Promise.resolve(null),
-      create: (data) => Promise.resolve(data),
-      updateOne: () => Promise.resolve({ nModified: 1 }),
-      deleteOne: () => Promise.resolve({ deletedCount: 1 })
-    };
-  }
-};
-
 // Import routes and services
 const companiesRoutes = require('./routes/companies');
 const questionnaireRoutes = require('./routes/questionnaire');
