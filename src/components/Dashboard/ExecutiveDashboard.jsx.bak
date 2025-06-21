@@ -1,0 +1,732 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
+  Divider,
+  Stack,
+  FormControl,
+  InputLabel,
+  Select, 
+  MenuItem,
+  Grid
+} from '@mui/material';
+import KPICard from '../KPICards/KPICard';
+import { 
+  LineChart, 
+  Line, 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  ScatterChart,
+  Scatter
+} from 'recharts';
+import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
+import { scaleQuantile } from 'd3-scale';
+
+// US GeoJSON data
+const geoUrl = "https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json";
+
+// US State Abbreviations mapping
+const stateAbbreviations = {
+  'Alabama': 'AL',
+  'Alaska': 'AK',
+  'Arizona': 'AZ',
+  'Arkansas': 'AR',
+  'California': 'CA',
+  'Colorado': 'CO',
+  'Connecticut': 'CT',
+  'Delaware': 'DE',
+  'Florida': 'FL',
+  'Georgia': 'GA',
+  'Hawaii': 'HI',
+  'Idaho': 'ID',
+  'Illinois': 'IL',
+  'Indiana': 'IN',
+  'Iowa': 'IA',
+  'Kansas': 'KS',
+  'Kentucky': 'KY',
+  'Louisiana': 'LA',
+  'Maine': 'ME',
+  'Maryland': 'MD',
+  'Massachusetts': 'MA',
+  'Michigan': 'MI',
+  'Minnesota': 'MN',
+  'Mississippi': 'MS',
+  'Missouri': 'MO',
+  'Montana': 'MT',
+  'Nebraska': 'NE',
+  'Nevada': 'NV',
+  'New Hampshire': 'NH',
+  'New Jersey': 'NJ',
+  'New Mexico': 'NM',
+  'New York': 'NY',
+  'North Carolina': 'NC',
+  'North Dakota': 'ND',
+  'Ohio': 'OH',
+  'Oklahoma': 'OK',
+  'Oregon': 'OR',
+  'Pennsylvania': 'PA',
+  'Rhode Island': 'RI',
+  'South Carolina': 'SC',
+  'South Dakota': 'SD',
+  'Tennessee': 'TN',
+  'Texas': 'TX',
+  'Utah': 'UT',
+  'Vermont': 'VT',
+  'Virginia': 'VA',
+  'Washington': 'WA',
+  'West Virginia': 'WV',
+  'Wisconsin': 'WI',
+  'Wyoming': 'WY',
+  'District of Columbia': 'DC'
+};
+
+const ExecutiveDashboard = ({ data = {} }) => {
+  const [filters, setFilters] = useState({
+    timeRange: 'all'
+  });
+  
+  // Combine all data for executive overview
+  const allData = useMemo(() => ({
+    oem: data.OEMManufacturing || [],
+    inbound: data.InboundLogistics || [],
+    responsiveness: data.SupplyChainResponsiveness || [],
+    traceability: data.Traceability || [],
+    supplier: data.SupplierPerformance || []
+  }), [data]);
+  
+  // Calculate KPI values
+  const [kpiValues, setKpiValues] = useState({
+    supplierOTIF: 'N/A',
+    productionThroughput: 'N/A',
+    inventoryAge: 'N/A',
+    ordersOnHold: 'N/A'
+  });
+  
+  // Calculate KPIs from data
+  useEffect(() => {
+    if (!allData.oem.length && !allData.inbound.length && !allData.supplier.length) {
+      // Set default sample values when no data is available
+      setKpiValues({
+        supplierOTIF: 92,
+        productionThroughput: 2.4,
+        inventoryAge: 28,
+        ordersOnHold: 15
+      });
+      return;
+    }
+    
+    try {
+      // Calculate supplier OTIF
+      let supplierOTIF = 92; // Default value
+      if (Array.isArray(allData.supplier) && allData.supplier.length > 0) {
+        const otifValues = allData.supplier
+          .map(item => parseFloat(item['OTIF (%)']))
+          .filter(val => !isNaN(val));
+          
+        if (otifValues.length > 0) {
+          const avgOTIF = otifValues.reduce((sum, val) => sum + val, 0) / otifValues.length;
+          supplierOTIF = Math.round(avgOTIF);
+        } else {
+          console.log('No valid OTIF values found in supplier data');
+        }
+      } else {
+        console.log('No supplier data available for OTIF calculation');
+      }
+      
+      // Calculate production throughput
+      let productionThroughput = 2.4; // Default value
+      if (Array.isArray(allData.oem) && allData.oem.length > 0) {
+        const throughputValues = allData.oem
+          .map(item => parseFloat(item['Production Throughput (units/hour)']))
+          .filter(val => !isNaN(val));
+          
+        if (throughputValues.length > 0) {
+          // Convert units/hour to millions/month (assuming 24/7 operation)
+          const avgThroughput = throughputValues.reduce((sum, val) => sum + val, 0) / throughputValues.length;
+          productionThroughput = ((avgThroughput * 24 * 30) / 1000000).toFixed(1);
+        }
+      }
+      
+      // Calculate inventory metrics
+      let inventoryAge = 28; // Default value
+      let ordersOnHold = 15; // Default value
+      if (Array.isArray(allData.inbound) && allData.inbound.length > 0) {
+        const ageValues = allData.inbound
+          .map(item => parseFloat(item['Inventory Ageing (days)']))
+          .filter(val => !isNaN(val));
+          
+        if (ageValues.length > 0) {
+          inventoryAge = Math.round(ageValues.reduce((sum, val) => sum + val, 0) / ageValues.length);
+        }
+        
+        const orderValues = allData.inbound
+          .map(item => parseFloat(item['Orders On Hold']))
+          .filter(val => !isNaN(val));
+          
+        if (orderValues.length > 0) {
+          ordersOnHold = Math.round(orderValues.reduce((sum, val) => sum + val, 0));
+        }
+      }
+      
+      setKpiValues({
+        supplierOTIF,
+        productionThroughput,
+        inventoryAge,
+        ordersOnHold
+      });
+    } catch (error) {
+      console.error('Error calculating KPI values:', error);
+      // Set default values on error
+      setKpiValues({
+        supplierOTIF: 92,
+        productionThroughput: 2.4,
+        inventoryAge: 28,
+        ordersOnHold: 15
+      });
+    }
+  }, [allData]);
+  
+  // Format data for production throughput chart
+  const formatProductionData = () => {
+    if (!Array.isArray(allData.oem) || allData.oem.length === 0) {
+      // Return sample data if no real data available
+      return [
+        { month: '1/2025', throughput: 1.2 },
+        { month: '2/2025', throughput: 1.5 },
+        { month: '3/2025', throughput: 1.8 },
+        { month: '4/2025', throughput: 1.6 },
+        { month: '5/2025', throughput: 2.1 },
+        { month: '6/2025', throughput: 2.3 },
+        { month: '7/2025', throughput: 2.0 },
+        { month: '8/2025', throughput: 2.4 },
+        { month: '9/2025', throughput: 2.6 },
+        { month: '10/2025', throughput: 2.9 },
+        { month: '11/2025', throughput: 3.1 },
+        { month: '12/2025', throughput: 3.4 }
+      ];
+    }
+    
+    try {
+      // Group by month
+      const monthlyData = {};
+      
+      allData.oem.forEach(item => {
+        if (!item.Date) return;
+        
+        const date = new Date(item.Date);
+        if (isNaN(date.getTime())) return;
+        
+        const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+        
+        if (!monthlyData[monthYear]) {
+          monthlyData[monthYear] = {
+            month: monthYear,
+            count: 0,
+            totalThroughput: 0
+          };
+        }
+        
+        const throughput = parseFloat(item['Production Throughput (units/hour)']);
+        if (!isNaN(throughput)) {
+          monthlyData[monthYear].totalThroughput += throughput;
+          monthlyData[monthYear].count += 1;
+        }
+      });
+      
+      // Calculate average throughput per month
+      const result = Object.values(monthlyData).map(item => ({
+        month: item.month,
+        throughput: item.count > 0 ? (item.totalThroughput / item.count) : 0
+      }));
+      
+      // Sort by date
+      return result.sort((a, b) => {
+        const [aMonth, aYear] = a.month.split('/');
+        const [bMonth, bYear] = b.month.split('/');
+        
+        if (aYear !== bYear) return parseInt(aYear) - parseInt(bYear);
+        return parseInt(aMonth) - parseInt(bMonth);
+      });
+    } catch (error) {
+      console.error('Error formatting production data:', error);
+      return [];
+    }
+  };
+  
+  // Format data for supplier OTIF chart
+  const formatSupplierOTIFData = () => {
+    // Log the first supplier data item to check structure
+    if (Array.isArray(allData.supplier) && allData.supplier.length > 0) {
+      console.log('Supplier data example:', allData.supplier[0]);
+    } else {
+      console.log('No supplier data available');
+    }
+    
+    if (!Array.isArray(allData.supplier) || allData.supplier.length === 0) {
+      // Return sample data if no real data available
+      return [
+        { supplier: 'Supplier A', otif: 95 },
+        { supplier: 'Supplier B', otif: 92 },
+        { supplier: 'Supplier C', otif: 88 },
+        { supplier: 'Supplier D', otif: 85 },
+        { supplier: 'Supplier E', otif: 82 },
+        { supplier: 'Supplier F', otif: 78 },
+        { supplier: 'Supplier G', otif: 75 },
+        { supplier: 'Supplier H', otif: 72 },
+        { supplier: 'Supplier I', otif: 68 },
+        { supplier: 'Supplier J', otif: 65 }
+      ];
+    }
+    
+    try {
+      // Group by supplier
+      const supplierData = {};
+      allData.supplier.forEach(item => {
+        // Get the supplier name from the correct property
+        const supplierName = item['Supplier Name'] || 'Unknown';
+        const otifValue = parseFloat(item['OTIF (%)']);
+        
+        if (isNaN(otifValue)) return;
+        
+        if (!supplierData[supplierName]) {
+          supplierData[supplierName] = {
+            count: 0,
+            totalOTIF: 0
+          };
+        }
+        supplierData[supplierName].count++;
+        supplierData[supplierName].totalOTIF += otifValue;
+      });
+      
+      // Calculate average OTIF for each supplier
+      const result = Object.keys(supplierData).map(supplier => ({
+        supplier,
+        otif: supplierData[supplier].totalOTIF / supplierData[supplier].count
+      }));
+      
+      // Sort by OTIF descending
+      result.sort((a, b) => b.otif - a.otif);
+      
+      // Return top 10 suppliers
+      return result.slice(0, 10);
+    } catch (error) {
+      console.error('Error formatting supplier OTIF data:', error);
+      return [];
+    }
+  };
+  
+  // Format data for inventory age vs orders scatter plot
+  const formatScatterData = () => {
+    if (!Array.isArray(allData.inbound) || allData.inbound.length === 0) {
+      // Return sample data if no real data available
+      return [
+        { name: 'Warehouse A', age: 45, orders: 12 },
+        { name: 'Warehouse B', age: 32, orders: 8 },
+        { name: 'Warehouse C', age: 28, orders: 15 },
+        { name: 'Warehouse D', age: 52, orders: 5 },
+        { name: 'Warehouse E', age: 18, orders: 22 },
+        { name: 'Warehouse F', age: 37, orders: 10 },
+        { name: 'Warehouse G', age: 41, orders: 7 },
+        { name: 'Warehouse H', age: 25, orders: 18 }
+      ];
+    }
+    
+    try {
+      return allData.inbound
+        .filter(item => 
+          item['Inventory Age (days)'] !== undefined && 
+          item['Orders On Hold'] !== undefined
+        )
+        .map(item => ({
+          name: item['Warehouse Location'] || 'Unknown',
+          age: parseFloat(item['Inventory Age (days)']),
+          orders: parseInt(item['Orders On Hold'], 10)
+        }))
+        .filter(item => !isNaN(item.age) && !isNaN(item.orders));
+    } catch (error) {
+      console.error('Error formatting scatter data:', error);
+      return [];
+    }
+  };
+  
+  // Format data for US map
+  const formatMapData = () => {
+    // Array validation to prevent errors
+    if (!Array.isArray(allData.inbound) || allData.inbound.length === 0) return {};
+    
+    try {
+      // Initialize result with all states set to 0
+      const result = Object.values(stateAbbreviations).reduce((acc, state) => {
+        acc[state] = 0;
+        return acc;
+      }, {});
+      
+      // Aggregate inventory values by state
+      allData.inbound.forEach(item => {
+        const location = item.Location;
+        if (!location) return;
+        
+        // Extract state from location (assuming format like "City, State")
+        const parts = location.split(',');
+        if (parts.length < 2) return;
+        
+        const state = parts[1].trim();
+        const stateCode = stateAbbreviations[state] || state;
+        
+        if (result[stateCode] !== undefined) {
+          const inventoryValue = parseFloat(item['Inventory Value ($)']);
+          if (!isNaN(inventoryValue)) {
+            result[stateCode] += inventoryValue;
+          }
+        }
+      });
+      
+      // Fill in missing states with random data for visualization
+      Object.values(stateAbbreviations).forEach(stateCode => {
+        if (!result[stateCode]) {
+          result[stateCode] = Math.round(500 + Math.random() * 9500);
+        }
+      });
+      
+      return result;
+    } catch (error) {
+      console.error('Error formatting map data:', error);
+      return {};
+    }
+  };
+  
+  const mapData = useMemo(() => formatMapData(), [allData]);
+  
+  // Create color scale for map
+  const colorScale = useMemo(() => {
+    const values = Object.values(mapData);
+    return scaleQuantile()
+      .domain(values.length > 0 ? values : [0, 100, 1000, 10000])
+      .range([
+        "#e3f2fd",
+        "#bbdefb",
+        "#90caf9",
+        "#64b5f6",
+        "#42a5f5",
+        "#2196f3",
+        "#1e88e5",
+        "#1976d2",
+        "#1565c0",
+        "#0d47a1"
+      ]);
+  }, [mapData]);
+  
+  // Handle filter changes
+  const handleFilterChange = (event) => {
+    const { name, value } = event.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
+
+  return (
+    <Box sx={{ p: 3, bgcolor: '#f5f5f5', minHeight: '100vh' }}>
+      <Typography variant="h6" sx={{ color: '#0d47a1', fontWeight: 'medium', mb: 1 }}>
+        Infor Birst
+      </Typography>
+      <Typography variant="h4" gutterBottom sx={{ color: '#0d47a1', fontWeight: 'bold', mb: 1 }}>
+        Supply Chain Metrics Dashboard
+      </Typography>
+      <Typography variant="subtitle1" gutterBottom sx={{ color: '#666', fontStyle: 'italic', mb: 3 }}>
+        Demo System and Demo data by CB
+      </Typography>
+      <Typography variant="body1" color="text.secondary" paragraph>
+        Overview of key supply chain metrics across all business units
+      </Typography>
+        
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel id="time-range-label">Time Range</InputLabel>
+          <Select
+            labelId="time-range-label"
+            id="time-range-select"
+            value={filters.timeRange}
+            label="Time Range"
+            onChange={handleFilterChange}
+            sx={{ 
+              borderRadius: '4px',
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'rgba(0, 0, 0, 0.12)'
+              }
+            }}
+          >
+            <MenuItem value="all">All Time</MenuItem>
+            <MenuItem value="1m">Last Month</MenuItem>
+            <MenuItem value="3m">Last 3 Months</MenuItem>
+            <MenuItem value="6m">Last 6 Months</MenuItem>
+            <MenuItem value="1y">Last Year</MenuItem>
+              }}
+            >
+              <MenuItem value="all">All Time</MenuItem>
+              <MenuItem value="1m">Last Month</MenuItem>
+              <MenuItem value="3m">Last 3 Months</MenuItem>
+              <MenuItem value="6m">Last 6 Months</MenuItem>
+              <MenuItem value="1y">Last Year</MenuItem>
+            </Select>
+          </FormControl>
+          <Typography variant="caption" color="text.secondary">
+            Last updated: {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}
+          </Typography>
+        </Box>
+      </Box>
+      
+      {/* KPI Cards */}
+      <Grid container spacing={2} sx={{ mb: 4 }}>
+        {/* Supplier OTIF Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <KPICard
+            title="Supplier OTIF %"
+            value={92}
+            unit="%"
+            description="On-Time In-Full delivery performance"
+            color="#0d47a1"
+            chart={
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={formatSupplierOTIFData().slice(0, 5)}>
+                  <XAxis dataKey="supplier" tick={false} />
+                  <YAxis domain={[0, 100]} />
+                  <Tooltip formatter={(value) => [`${value}%`, 'OTIF']} />
+                  <Bar dataKey="otif" fill="#0d47a1" />
+                </BarChart>
+              </ResponsiveContainer>
+            }
+          />
+        </Grid>
+        
+        {/* Production Throughput Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <KPICard
+            title="Production Throughput"
+            value={kpiValues.productionThroughput !== 'N/A' ? kpiValues.productionThroughput : 'N/A'}
+            unit="M units/month"
+            description="Average monthly production volume"
+            color="#00acc1"
+            chart={
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={formatProductionData().slice(-6)}>
+                  <XAxis dataKey="month" tick={false} />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`${value.toFixed(1)}M`, 'Throughput']} />
+                  <Line type="monotone" dataKey="throughput" stroke="#00acc1" dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            }
+          />
+        </Grid>
+        
+        {/* Inventory Age Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <KPICard
+            title="Avg. Inventory Age"
+            value={kpiValues.inventoryAge !== 'N/A' ? kpiValues.inventoryAge : 'N/A'}
+            unit="days"
+            description="Average age of inventory in warehouse"
+            color="#ffb300"
+            chart={
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={formatScatterData().slice(0, 5)}>
+                  <XAxis dataKey="name" tick={false} />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`${value} days`, 'Age']} />
+                  <Bar dataKey="age" fill="#ffb300" />
+                </BarChart>
+              </ResponsiveContainer>
+            }
+          />
+        </Grid>
+        
+        {/* Orders on Hold Card */}
+        <Grid item xs={12} sm={6} md={3}>
+          <KPICard
+            title="Orders on Hold"
+            value={kpiValues.ordersOnHold}
+            description="Number of orders currently on hold"
+            color="#f44336"
+            chart={
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={formatScatterData().slice(0, 5)}>
+                  <XAxis dataKey="name" tick={false} />
+                  <YAxis />
+                  <Tooltip formatter={(value) => [`${value} orders`, 'On Hold']} />
+                  <Bar dataKey="orders" fill="#f44336" />
+                </BarChart>
+              </ResponsiveContainer>
+            }
+          />
+        </Grid>
+      </Grid>
+      
+      {/* Charts and Map */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mb: 4 }}>
+        {/* Production Throughput Chart */}
+        <Paper sx={{ p: 2, boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)', borderRadius: '4px' }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2, color: '#0d47a1' }}>
+            Monthly Production Throughput
+          </Typography>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={formatProductionData()}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+              <YAxis 
+                tick={{ fontSize: 12 }}
+                tickFormatter={(value) => `${value}M`}
+              />
+              <Tooltip 
+                formatter={(value) => [`${value}M units`, 'Throughput']} 
+                labelFormatter={(label) => `Month: ${label}`}
+                contentStyle={{ 
+                  backgroundColor: '#fff', 
+                  borderRadius: '4px',
+                  boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.15)',
+                  border: 'none'
+                }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="throughput" 
+                stroke="#1976d2" 
+                strokeWidth={2}
+                dot={{ fill: '#1976d2', r: 4 }}
+                activeDot={{ r: 6, fill: '#0d47a1' }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </Paper>
+        
+        {/* Supplier OTIF Chart */}
+        <Paper sx={{ p: 2, boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)', borderRadius: '4px' }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2, color: '#0d47a1' }}>
+            Top Supplier OTIF Performance
+          </Typography>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={formatSupplierOTIFData()} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
+              <XAxis type="number" tick={{ fontSize: 12 }} domain={[0, 100]} />
+              <YAxis 
+                type="category" 
+                dataKey="supplier" 
+                tick={{ fontSize: 12 }} 
+                width={100}
+              />
+              <Tooltip 
+                formatter={(value) => [`${value}%`, 'OTIF']} 
+                contentStyle={{ 
+                  backgroundColor: '#fff', 
+                  borderRadius: '4px',
+                  boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.15)',
+                  border: 'none'
+                }}
+              />
+              <Bar 
+                dataKey="otif" 
+                fill="#00acc1"
+                radius={[0, 4, 4, 0]}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </Paper>
+        
+        {/* Inventory Age vs Orders Scatter Plot */}
+        <Paper sx={{ p: 2, boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)', borderRadius: '4px' }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2, color: '#0d47a1' }}>
+            Inventory Age vs Orders On Hold
+          </Typography>
+          <ResponsiveContainer width="100%" height={250}>
+            <ScatterChart>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f5" />
+              <XAxis 
+                type="number" 
+                dataKey="x" 
+                name="Inventory Age" 
+                unit=" days" 
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis 
+                type="number" 
+                dataKey="y" 
+                name="Orders On Hold" 
+                tick={{ fontSize: 12 }}
+              />
+              <Tooltip 
+                cursor={{ strokeDasharray: '3 3' }}
+                formatter={(value, name) => [value, name === 'x' ? 'Inventory Age (days)' : 'Orders On Hold']}
+                labelFormatter={(label) => ''}
+                contentStyle={{ 
+                  backgroundColor: '#fff', 
+                  borderRadius: '4px',
+                  boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.15)',
+                  border: 'none'
+                }}
+              />
+              <Scatter 
+                name="Locations" 
+                data={formatScatterData()} 
+                fill="#ffb300"
+              />
+            </ScatterChart>
+          </ResponsiveContainer>
+        </Paper>
+        
+        {/* US Map Visualization */}
+        <Paper sx={{ p: 2, boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)', borderRadius: '4px' }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 2, color: '#0d47a1' }}>
+            Inventory Distribution by State
+          </Typography>
+          <Box sx={{ height: 250 }}>
+            <ComposableMap projection="geoAlbersUsa">
+              <Geographies geography={geoUrl}>
+                {({ geographies }) =>
+                  geographies.map(geo => {
+                    // Safe access to state code with fallback
+                    const stateCode = geo.properties?.postal || 
+                                     (geo.properties?.iso_3166_2 ? geo.properties.iso_3166_2.substring(3) : '');
+                    const value = mapData[stateCode] || 0;
+                    return (
+                      <Geography
+                        key={geo.rsmKey}
+                        geography={geo}
+                        fill={colorScale(value)}
+                        stroke="#FFFFFF"
+                        strokeWidth={0.5}
+                        style={{
+                          default: { outline: 'none' },
+                          hover: { outline: 'none', fill: '#1976d2' },
+                          pressed: { outline: 'none' }
+                        }}
+                      />
+                    );
+                  })
+                }
+              </Geographies>
+            </ComposableMap>
+          </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}>
+              <Box sx={{ width: 12, height: 12, backgroundColor: '#e3f2fd', mr: 0.5 }} />
+              <Typography variant="caption">Low</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', mr: 2 }}>
+              <Box sx={{ width: 12, height: 12, backgroundColor: '#2196f3', mr: 0.5 }} />
+              <Typography variant="caption">Medium</Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Box sx={{ width: 12, height: 12, backgroundColor: '#0d47a1', mr: 0.5 }} />
+              <Typography variant="caption">High</Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
+    </Box>
+  );
+};
+
+export default ExecutiveDashboard;
