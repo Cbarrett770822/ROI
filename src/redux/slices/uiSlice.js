@@ -6,6 +6,12 @@ const initialState = {
   isLoading: false,
   activeView: 'companies',
   error: null,
+  notification: {
+    open: false,
+    message: '',
+    type: 'info', // 'success', 'error', 'warning', 'info'
+    duration: 5000
+  }
 };
 
 export const uiSlice = createSlice({
@@ -23,6 +29,17 @@ export const uiSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
+    },
+    showNotification: (state, action) => {
+      state.notification = {
+        open: true,
+        message: action.payload.message,
+        type: action.payload.type || 'info',
+        duration: action.payload.duration || 5000
+      };
+    },
+    hideNotification: (state) => {
+      state.notification.open = false;
     },
   },
   extraReducers: (builder) => {
@@ -69,6 +86,24 @@ export const uiSlice = createSlice({
   },
 });
 
-export const { setLoading, setActiveView, setError, clearError } = uiSlice.actions;
+export const { 
+  setLoading, 
+  setActiveView, 
+  setError, 
+  clearError,
+  showNotification,
+  hideNotification 
+} = uiSlice.actions;
+
+// Selectors
+export const selectLoading = (state) => state.ui?.isLoading || false;
+export const selectActiveView = (state) => state.ui?.activeView || 'companies';
+export const selectError = (state) => state.ui?.error || null;
+export const selectNotification = (state) => state.ui?.notification || {
+  open: false,
+  message: '',
+  type: 'info',
+  duration: 5000
+};
 
 export default uiSlice.reducer;
