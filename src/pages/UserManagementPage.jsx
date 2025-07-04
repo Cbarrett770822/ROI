@@ -182,9 +182,9 @@ export default function UserManagementPage() {
   const handleEditUser = (user) => {
     setIsEditing(true);
     setUserId(user._id);
-    setUsername(user.username);
+    setUsername(user?.username || '');
     setPassword(''); // Don't populate password for security
-    setRole(user.role);
+    setRole(user?.role || 'user');
     setFormOpen(true);
   };
 
@@ -252,16 +252,16 @@ export default function UserManagementPage() {
               ) : (
                 users.map(user => (
                   <TableRow key={user._id}>
-                    <TableCell>{user.username}</TableCell>
+                    <TableCell>{user?.username || 'Unknown'}</TableCell>
                     <TableCell>
                       <Chip 
-                        label={user.role} 
-                        color={user.role === 'admin' ? 'primary' : 'default'}
+                        label={user?.role || 'user'} 
+                        color={user?.role === 'admin' ? 'primary' : 'default'}
                         size="small"
                       />
                     </TableCell>
                     <TableCell>
-                      {new Date(user.createdAt).toLocaleDateString()}
+                      {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                     </TableCell>
                     <TableCell align="right">
                       <IconButton 
@@ -275,7 +275,7 @@ export default function UserManagementPage() {
                         color="error" 
                         onClick={() => handleDeleteDialog(user)}
                         size="small"
-                        disabled={user._id === auth.user.id} // Prevent deleting current user
+                        disabled={auth?.user?.id && user?._id === auth.user.id} // Prevent deleting current user
                       >
                         <DeleteIcon fontSize="small" />
                       </IconButton>

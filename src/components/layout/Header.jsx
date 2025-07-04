@@ -200,10 +200,10 @@ const Header = () => {
             ) : (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: 16 }}>
-                  {user.username[0].toUpperCase()}
+                  {user?.username?.[0]?.toUpperCase() || '?'}
                 </Avatar>
                 <Typography variant="body2" sx={{ ml: 1, fontWeight: 600 }}>
-                  {user.username} <span style={{ color: '#0277BD', fontWeight: 400 }}>({user.role})</span>
+                  {user?.username || 'User'} <span style={{ color: '#0277BD', fontWeight: 400 }}>({user?.role || 'user'})</span>
                 </Typography>
                 <Button 
                   variant="contained" 
