@@ -1,9 +1,12 @@
 import { useEffect } from 'react';
 import './api'; // Import API configuration
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline, Box, Backdrop, CircularProgress } from '@mui/material';
+
+// Import error handling and notification components
+import Notification from './components/common/Notification';
 
 // Import components
 import Header from './components/layout/Header';
@@ -12,6 +15,11 @@ import QuestionnairePage from './pages/QuestionnairePage';
 import CalculatorPage from './pages/CalculatorPage';
 import HomePage from './pages/HomePage';
 import WarehouseMapPage from './pages/WarehouseMapPage';
+import LoginPage from './pages/LoginPage';
+
+import RequireAuth from './components/auth/RequireAuth';
+import UserManagementPage from './pages/UserManagementPage';
+import QuestionnaireDebugger from './components/QuestionnaireDebugger';
 
 // Import actions
 import { setLoading } from './redux/slices/uiSlice';
@@ -106,17 +114,22 @@ function App() {
   // Get loading state from Redux store
   const isLoading = useSelector((state) => state.ui.isLoading);
   
-  // Initialize app with default companies when it first loads
+  // Get authentication state from Redux store with null checks
+  const { isAuthenticated = false } = useSelector((state) => state?.auth || {});
+  
+  // Initialize app with default companies only when authenticated
   useEffect(() => {
-    dispatch(initializeApp())
-      .unwrap()
-      .then((companies) => {
-        console.log('App initialized with companies:', companies);
-      })
-      .catch((error) => {
-        console.error('Failed to initialize app:', error);
-      });
-  }, [dispatch]);
+    if (isAuthenticated) {
+      dispatch(initializeApp())
+        .unwrap()
+        .then((companies) => {
+          console.log('App initialized with companies:', companies);
+        })
+        .catch((error) => {
+          console.error('Failed to initialize app:', error);
+        });
+    }
+  }, [dispatch, isAuthenticated]);
   
   // Reset loading state when location changes (navigation completes)
   useEffect(() => {
@@ -126,10 +139,31 @@ function App() {
     
     return () => clearTimeout(timer);
   }, [location.pathname, dispatch]);
+  
+  // Force redirect to login page on initial load if not authenticated
+  useEffect(() => {
+    // Always check auth status on app load and redirect accordingly
+    console.log('Auth check - isAuthenticated:', isAuthenticated, 'path:', location.pathname);
+    
+    if (!isAuthenticated) {
+      // If not authenticated, redirect to login unless already there
+      if (location.pathname !== '/login') {
+        console.log('Not authenticated, redirecting to login');
+        navigate('/login', { replace: true });
+      }
+    } else if (location.pathname === '/' || location.pathname === '/login') {
+      // If authenticated and on root or login page, redirect to home
+      console.log('Already authenticated, redirecting to home');
+      navigate('/home', { replace: true });
+    }
+  }, [isAuthenticated, location.pathname, navigate]);
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      
+      {/* Global notification system */}
+      <Notification />
       
       {/* Global loading overlay */}
       <Backdrop
@@ -154,11 +188,82 @@ function App() {
           }}
         >
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/companies" element={<CompanySelectionPage />} />
-            <Route path="/questionnaire/:companyId" element={<QuestionnairePage />} />
-            <Route path="/calculator/:companyId" element={<CalculatorPage />} />
-            <Route path="/warehouse-maps/:companyId" element={<WarehouseMapPage />} />
+            {/* Public routes */}
+            <Route path="/login" element={<LoginPage />} />
+            
+            {/* Default route - redirect based on auth status */}
+            <Route path="/" element={
+              isAuthenticated === true ? (
+                <Navigate to="/home" replace />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            } />
+            
+            {/* Protected routes */}
+            <Route path="/home" element={
+              <RequireAuth>
+                <HomePage />
+              </RequireAuth>
+            } />
+            <Route path="/companies" element={
+              <RequireAuth>
+                <CompanySelectionPage />
+              </RequireAuth>
+            } />
+            {/* Redirect /questionnaire/undefined to /companies */}
+            <Route path="/questionnaire/undefined" element={<Navigate to="/companies" replace />} />
+            
+            {/* Normal questionnaire route with company ID */}
+            <Route path="/questionnaire/:companyId" element={
+              <RequireAuth>
+                <QuestionnairePage />
+              </RequireAuth>
+            } />
+            {/* Redirect /calculator/undefined to /companies */}
+            <Route path="/calculator/undefined" element={<Navigate to="/companies" replace />} />
+            
+            {/* Normal calculator route with company ID */}
+            <Route path="/calculator/:companyId" element={
+              <RequireAuth>
+                <CalculatorPage />
+              </RequireAuth>
+            } />
+            {/* Redirect /warehouse-maps/undefined to /companies */}
+            <Route path="/warehouse-maps/undefined" element={<Navigate to="/companies" replace />} />
+            
+            {/* Normal warehouse maps route with company ID */}
+            <Route path="/warehouse-maps/:companyId" element={
+              <RequireAuth>
+                <WarehouseMapPage />
+              </RequireAuth>
+            } />
+            <Route path="/user-management" element={
+              <RequireAuth>
+                <UserManagementPage />
+              </RequireAuth>
+            } />
+            
+            {/* Debug route */}
+            <Route path="/debug/questionnaire/:companyId" element={
+              <RequireAuth>
+                <QuestionnaireDebugger />
+              </RequireAuth>
+            } />
+            <Route path="/debug/questionnaire" element={
+              <RequireAuth>
+                <QuestionnaireDebugger />
+              </RequireAuth>
+            } />
+            
+            {/* Catch all - redirect to login or home based on auth */}
+            <Route path="*" element={
+              isAuthenticated === true ? (
+                <Navigate to="/home" replace />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            } />
           </Routes>
         </Box>
       </Box>
