@@ -711,14 +711,7 @@ const mockQuestions = [
 ];
 
 // Helper functions for localStorage persistence
-// Create a custom axios instance for API calls
-const apiClient = axios.create({
-  baseURL: '',  // Empty base URL to use relative paths
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${localStorage.getItem('token')}`
-  }
-});
+// Note: apiClient is already imported from '../../api/apiClient'
 
 // API endpoints path is defined at the top of the file
 
