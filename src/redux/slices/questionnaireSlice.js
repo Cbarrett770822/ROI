@@ -1,5 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { api as apiClient } from '../../api/apiClient';
+
+// API URL for questionnaire endpoints
+const API_URL = ''; // Empty string because apiClient already includes the base URL
 
 // Mock questions data for development - organized by categories
 const mockQuestions = [
@@ -708,8 +711,16 @@ const mockQuestions = [
 ];
 
 // Helper functions for localStorage persistence
-// API endpoints
-const API_URL = 'http://localhost:3001/api';
+// Create a custom axios instance for API calls
+const apiClient = axios.create({
+  baseURL: '',  // Empty base URL to use relative paths
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${localStorage.getItem('token')}`
+  }
+});
+
+// API endpoints path is defined at the top of the file
 
 // Helper function to handle API errors
 const handleApiError = (error) => {
@@ -750,7 +761,7 @@ export const fetchQuestionnaire = createAsyncThunk(
       }
       
       // Load questionnaire from API
-      const response = await axios.get(`${API_URL}/questionnaire/${companyId}`);
+      const response = await apiClient.get(`${API_URL}/questionnaire/${companyId}`);
       
       // Get answers from the API response
       const answers = response.data.answers || {};
@@ -776,7 +787,7 @@ export const saveQuestionnaireAnswers = createAsyncThunk(
       }
       
       // Save answers to API
-      const response = await axios.post(`${API_URL}/questionnaire/${companyId}`, { answers });
+      const response = await apiClient.post(`${API_URL}/questionnaire/${companyId}`, { answers });
       
       return response.data;
     } catch (error) {
