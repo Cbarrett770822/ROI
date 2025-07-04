@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { loginStart, loginSuccess, loginFailure } from '../redux/slices/authSlice';
 import { useNavigate } from 'react-router-dom';
 import { Box, Button, TextField, Typography, Paper, CircularProgress, Alert } from '@mui/material';
+import { api } from '../api/apiClient';
 
 export default function LoginPage() {
   const dispatch = useDispatch();
@@ -18,45 +19,15 @@ export default function LoginPage() {
     try {
       console.log('Attempting login for:', username);
       
-      const res = await fetch('http://localhost:9999/.netlify/functions/auth-login', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ username, password })
-      });
+      const response = await api.post('auth-login', { username, password });
       
-      console.log('Login response status:', res.status);
-      
-      // Handle non-OK responses
-      if (!res.ok) {
-        const errorText = await res.text();
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-          throw new Error(errorData.message || 'Login failed');
-        } catch (parseError) {
-          throw new Error('Login failed: ' + res.status);
-        }
-      }
-      
-      // Parse successful response
-      const responseText = await res.text();
-      console.log('Login response received, length:', responseText.length);
-      
-      let data;
-      try {
-        data = responseText ? JSON.parse(responseText) : {};
-      } catch (parseError) {
-        console.error('Failed to parse response:', parseError);
-        throw new Error('Invalid response from server');
-      }
+      console.log('Login response status:', response.status);
       
       // Extract token and user from the response
-      const { token, user } = data;
+      const { token, user } = response.data;
+      
       if (!token || !user) {
-        console.error('Missing token or user in response:', data);
+        console.error('Missing token or user in response:', response.data);
         throw new Error('Invalid response format from server');
       }
       
