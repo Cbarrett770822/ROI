@@ -1,8 +1,14 @@
 import axios from 'axios';
 
 // Set up axios defaults
-axios.defaults.baseURL = 'http://localhost:3001';
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8888';
 axios.defaults.headers.common['Content-Type'] = 'application/json';
+
+// Add authorization header if token exists
+const token = localStorage.getItem('token');
+if (token) {
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
 
 // Add response interceptor for error handling
 axios.interceptors.response.use(
