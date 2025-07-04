@@ -17,7 +17,7 @@ import {
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { setLoading } from '../../redux/slices/uiSlice';
-import { logout } from '../../store/authSlice';
+import { logout } from '../../redux/slices/authSlice';
 
 // Icons
 import MenuIcon from '@mui/icons-material/Menu';
