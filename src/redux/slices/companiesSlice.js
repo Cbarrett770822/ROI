@@ -1,10 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { v4 as uuidv4 } from 'uuid';
-import axios from 'axios';
+import authFetch from '../../api/authFetch';
 import { exportDataToFile, importDataFromFile } from '../../utils/exportData';
 
 // API endpoints for companies
-const API_URL = 'http://localhost:3001/api';
+const API_URL = 'http://localhost:9999/.netlify/functions';
 
 // Helper function to handle API errors
 const handleApiError = (error) => {
@@ -31,9 +31,8 @@ export const initializeApp = createAsyncThunk(
   'companies/initializeApp',
   async (_, { dispatch, rejectWithValue }) => {
     try {
-      // Load companies from API
-      const response = await axios.get(`${API_URL}/companies`);
-      const companies = response.data;
+      // Load companies from API - authFetch now returns parsed JSON
+      const companies = await authFetch(`${API_URL}/companies`);
       
       console.log('App initialized with companies:', companies);
       
@@ -49,9 +48,8 @@ export const fetchCompanies = createAsyncThunk(
   'companies/fetchCompanies',
   async (_, { rejectWithValue }) => {
     try {
-      // Load companies from API
-      const response = await axios.get(`${API_URL}/companies`);
-      return response.data;
+      // Load companies from API - authFetch now returns parsed JSON
+      return await authFetch(`${API_URL}/companies`);
     } catch (error) {
       return rejectWithValue(handleApiError(error) || 'Failed to fetch companies');
     }
@@ -60,12 +58,19 @@ export const fetchCompanies = createAsyncThunk(
 
 export const createCompany = createAsyncThunk(
   'companies/createCompany',
-  async (name, { rejectWithValue }) => {
+  async (companyData, { rejectWithValue }) => {
     try {
-      // Create a new company via API
-      const response = await axios.post(`${API_URL}/companies`, { name });
-      return response.data;
+      console.log('Creating company with data:', companyData);
+      // Create a new company via API - authFetch now returns parsed JSON
+      const responseData = await authFetch(`${API_URL}/companies`, {
+        method: 'POST',
+        body: JSON.stringify(companyData)
+      });
+      
+      console.log('Company created successfully:', responseData);
+      return responseData;
     } catch (error) {
+      console.error('Error creating company:', error);
       return rejectWithValue(handleApiError(error) || 'Failed to create company');
     }
   }
@@ -75,9 +80,11 @@ export const updateCompany = createAsyncThunk(
   'companies/updateCompany',
   async ({ id, name }, { rejectWithValue }) => {
     try {
-      // Update company via API
-      const response = await axios.put(`${API_URL}/companies/${id}`, { name });
-      return response.data;
+      // Update company via API - authFetch now returns parsed JSON
+      return await authFetch(`${API_URL}/companies/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name })
+      });
     } catch (error) {
       return rejectWithValue(handleApiError(error) || 'Failed to update company');
     }
@@ -89,7 +96,9 @@ export const deleteCompany = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       // Delete company via API
-      await axios.delete(`${API_URL}/companies/${id}`);
+      await authFetch(`${API_URL}/companies/${id}`, {
+        method: 'DELETE',
+      });
       return id;
     } catch (error) {
       return rejectWithValue(handleApiError(error) || 'Failed to delete company');
@@ -102,8 +111,8 @@ export const getCompanyData = createAsyncThunk(
   'companies/getCompanyData',
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_URL}/companies/${id}/data`);
-      return response.data;
+      const response = await authFetch(`${API_URL}/companies/${id}/data`);
+      return await response.json();
     } catch (error) {
       return rejectWithValue(handleApiError(error) || 'Failed to get company data');
     }
@@ -115,8 +124,11 @@ export const saveCompanyData = createAsyncThunk(
   'companies/saveCompanyData',
   async ({ id, data }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_URL}/companies/${id}/data`, data);
-      return response.data;
+      const response = await authFetch(`${API_URL}/companies/${id}/data`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+      return await response.json();
     } catch (error) {
       return rejectWithValue(handleApiError(error) || 'Failed to save company data');
     }
@@ -363,9 +375,11 @@ export const companiesSlice = createSlice({
       })
       .addCase(deleteCompany.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.companies = state.companies.filter(company => company.id !== action.payload.companyId);
+        // Handle both formats: direct ID or object with companyId property
+        const deletedId = typeof action.payload === 'string' ? action.payload : action.payload.companyId;
+        state.companies = state.companies.filter(company => company.id !== deletedId);
         // If the deleted company was active, clear the active company
-        if (state.activeCompany && state.activeCompany.id === action.payload.companyId) {
+        if (state.activeCompany && state.activeCompany.id === deletedId) {
           state.activeCompany = null;
         }
         state.error = null;

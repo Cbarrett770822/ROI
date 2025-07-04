@@ -14,9 +14,10 @@ import {
   Avatar,
   Divider
 } from '@mui/material';
-import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { setLoading } from '../../redux/slices/uiSlice';
+import { logout } from '../../store/authSlice';
 
 // Icons
 import MenuIcon from '@mui/icons-material/Menu';
@@ -24,12 +25,17 @@ import BusinessIcon from '@mui/icons-material/Business';
 import HomeIcon from '@mui/icons-material/Home';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import BarChartIcon from '@mui/icons-material/BarChart';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 const Header = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const auth = useSelector(state => state.auth);
+  const user = auth.user;
+  const isLoggedIn = Boolean(auth.token && user);
   
   // Mobile menu state
   const [anchorEl, setAnchorEl] = useState(null);
@@ -52,11 +58,14 @@ const Header = () => {
     }
   };
   
-  // Navigation items
-  const navItems = [
+  // Navigation items - only show if logged in
+  const navItems = isLoggedIn ? [
     { text: 'Home', path: '/', icon: <HomeIcon fontSize="small" sx={{ mr: 1 }} /> },
-    { text: 'Companies', path: '/companies', icon: <BusinessIcon fontSize="small" sx={{ mr: 1 }} /> }
-  ];
+    { text: 'Companies', path: '/companies', icon: <BusinessIcon fontSize="small" sx={{ mr: 1 }} /> },
+    ...(user?.role === 'admin' ? [
+      { text: 'User Management', path: '/user-management', icon: <BarChartIcon fontSize="small" sx={{ mr: 1 }} /> }
+    ] : [])
+  ] : [];
 
   return (
     <AppBar 
@@ -98,7 +107,7 @@ const Header = () => {
                 display: { xs: 'none', sm: 'block' }
               }}
             >
-              Supply Chain Assessment
+              WMS Benefits & ROI Calculator
             </Typography>
           </Box>
 
@@ -180,6 +189,57 @@ const Header = () => {
               </Menu>
             </Box>
           )}
+          {/* User Auth Controls */}
+          <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center' }}>
+            {!isLoggedIn ? (
+              <>
+                <Button color="inherit" component={RouterLink} to="/login" sx={{ ml: 1 }}>
+                  Login
+                </Button>
+              </>
+            ) : (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main', fontSize: 16 }}>
+                  {user.username[0].toUpperCase()}
+                </Avatar>
+                <Typography variant="body2" sx={{ ml: 1, fontWeight: 600 }}>
+                  {user.username} <span style={{ color: '#0277BD', fontWeight: 400 }}>({user.role})</span>
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  sx={{ 
+                    ml: 2,
+                    bgcolor: 'error.main',
+                    '&:hover': {
+                      bgcolor: 'error.dark',
+                    }
+                  }} 
+                  startIcon={<LogoutIcon />}
+                  onClick={async () => { 
+                    try {
+                      // Call the logout API endpoint
+                      await fetch('http://localhost:9999/.netlify/functions/auth-logout', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${auth.token}`
+                        }
+                      });
+                    } catch (error) {
+                      console.error('Logout API error:', error);
+                    } finally {
+                      // Always dispatch logout action and navigate to login page
+                      dispatch(logout()); 
+                      navigate('/login');
+                    }
+                  }}
+                >
+                  Logout
+                </Button>
+              </Box>
+            )}
+          </Box>
         </Toolbar>
       </Container>
     </AppBar>
