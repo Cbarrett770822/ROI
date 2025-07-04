@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { initializeAuth } from '../../utils/authInit';
+import { initializeAuth } from '../utils/authInit';
 
 // Initialize auth state from localStorage with validation
 const { token, user, isAuthenticated } = initializeAuth();
