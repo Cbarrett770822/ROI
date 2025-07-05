@@ -14,20 +14,20 @@
 [functions]
   node_bundler = "esbuild"
 
-# Add CORS headers for all function endpoints
-[[headers]]
-  for = "/.netlify/functions/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "https://wms-roi.netlify.app"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, Accept, Cache-Control, Pragma"
-    Access-Control-Allow-Credentials = "true"
-    Access-Control-Max-Age = "86400"
-
-# Redirect API requests to serverless functions (similar to WMS tutorial app)
+# Redirect API requests to serverless functions with CORS headers
+# This is the primary way we handle CORS in this application
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
   force = true
-  headers = {Access-Control-Allow-Origin = "https://wms-roi.netlify.app", Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS", Access-Control-Allow-Headers = "Content-Type, Authorization, Accept, Cache-Control, Pragma", Access-Control-Allow-Credentials = "true", Access-Control-Max-Age = "86400"}
+  # Use wildcard origin to allow both production and development environments
+  headers = {Access-Control-Allow-Origin = "*", Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS", Access-Control-Allow-Headers = "Content-Type, Authorization, Accept, Cache-Control, Pragma", Access-Control-Allow-Credentials = "true", Access-Control-Max-Age = "86400"}
+
+# Direct access to functions should also have CORS headers
+[[redirects]]
+  from = "/.netlify/functions/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  # Use wildcard origin to allow both production and development environments
+  headers = {Access-Control-Allow-Origin = "*", Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS", Access-Control-Allow-Headers = "Content-Type, Authorization, Accept, Cache-Control, Pragma", Access-Control-Allow-Credentials = "true", Access-Control-Max-Age = "86400"}
