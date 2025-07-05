@@ -4,6 +4,9 @@ const jwt = require("jsonwebtoken");
 // Import the shared CORS utility functions
 const { getCorsHeaders, handleCors, addCorsHeaders } = require('./utils/corsHeaders');
 
+// Use the same JWT secret as auth-login.js
+const JWT_SECRET = process.env.JWT_SECRET || 'changeme-secret';
+
 
 // MongoDB Schema for Company
 const companySchema = new mongoose.Schema({
@@ -31,9 +34,10 @@ const verifyToken = (event) => {
       return { isValid: false, error: 'No token provided' };
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     return { isValid: true, user: decoded };
   } catch (error) {
+    console.error('Token verification error:', error.message);
     return { isValid: false, error: 'Invalid token' };
   }
 };
