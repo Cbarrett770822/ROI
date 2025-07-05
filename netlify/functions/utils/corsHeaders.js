@@ -1,5 +1,6 @@
 // CORS headers utility for Netlify Functions
 // This provides consistent CORS headers across all API endpoints
+// Updated with production domains to fix CORS issues
 
 /**
  * Generate CORS headers based on the request event
