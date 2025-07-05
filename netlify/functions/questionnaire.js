@@ -13,7 +13,13 @@ const getCorsHeaders = (event) => {
   const origin = event && event.headers && event.headers.origin;
   
   // Allow both development ports and production URLs
-  const allowedOrigins = ['http://localhost:8888', 'http://localhost:8889', 'http://localhost:9999'];
+  const allowedOrigins = [
+    'http://localhost:8888', 
+    'http://localhost:8889', 
+    'http://localhost:9999',
+    'https://wms-roi.netlify.app',
+    'https://roi-wms-app.netlify.app'
+  ];
   
   // Use the requesting origin if it's allowed, otherwise default to localhost:8888
   const allowedOrigin = origin && allowedOrigins.includes(origin)
