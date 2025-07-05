@@ -23,3 +23,11 @@
     Access-Control-Allow-Headers = "Content-Type, Authorization, Accept, Cache-Control, Pragma"
     Access-Control-Allow-Credentials = "true"
     Access-Control-Max-Age = "86400"
+
+# Redirect API requests to serverless functions (similar to WMS tutorial app)
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+  force = true
+  headers = {Access-Control-Allow-Origin = "https://wms-roi.netlify.app", Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS", Access-Control-Allow-Headers = "Content-Type, Authorization, Accept, Cache-Control, Pragma", Access-Control-Allow-Credentials = "true", Access-Control-Max-Age = "86400"}
