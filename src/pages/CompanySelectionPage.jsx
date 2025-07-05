@@ -46,6 +46,7 @@ import {
   selectCompaniesError
 } from '../redux/slices/companiesSlice';
 import { setLoading } from '../redux/slices/uiSlice';
+import { selectUser } from '../store/authSlice';
 
 /**
  * Company Selection Page component
@@ -62,6 +63,7 @@ const CompanySelectionPage = () => {
   const companies = useSelector(selectAllCompanies);
   const status = useSelector(selectCompaniesStatus);
   const error = useSelector(selectCompaniesError);
+  const user = useSelector(selectUser);
   const loading = status === 'loading';
   
   // Local state
@@ -77,7 +79,7 @@ const CompanySelectionPage = () => {
 
   // Filter companies based on search term
   const filteredCompanies = companies.filter(company => 
-    company.name.toLowerCase().includes(searchTerm.toLowerCase())
+    company && company.name && company.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Handle dialog open/close
@@ -98,20 +100,37 @@ const CompanySelectionPage = () => {
       setFormError('Company name is required');
       return;
     }
-    
+
     try {
-      // Dispatch create company action
-      const resultAction = await dispatch(createCompany(newCompanyName.trim()));
+      dispatch(setLoading(true));
+      console.log('Creating company with name:', newCompanyName.trim());
+      
+      // When creating a company, the backend will automatically associate it with the current user
+      const resultAction = await dispatch(createCompany({ name: newCompanyName.trim() }));
       
       if (createCompany.fulfilled.match(resultAction)) {
+        // Success - close dialog and navigate to the new company
         handleCloseDialog();
-        // Set global loading state before navigation
-        dispatch(setLoading(true));
-        // Navigate to questionnaire with new company
-        navigate(`/questionnaire/${resultAction.payload.id}`);
+        const newCompany = resultAction.payload;
+        console.log('Company created successfully:', newCompany);
+        
+        if (newCompany && newCompany.id) {
+          dispatch(setActiveCompany(newCompany));
+          navigate(`/questionnaire/${newCompany.id}`);
+        } else {
+          console.error('Invalid company data received:', newCompany);
+          setFormError('Received invalid company data from server');
+        }
+      } else {
+        // Error
+        console.error('Failed to create company:', resultAction.error);
+        setFormError(resultAction.error.message || 'Failed to create company');
       }
-    } catch (err) {
-      setFormError('Failed to create company');
+    } catch (error) {
+      console.error('Exception creating company:', error);
+      setFormError(error.message || 'An unexpected error occurred');
+    } finally {
+      dispatch(setLoading(false));
     }
   };
 
@@ -124,7 +143,7 @@ const CompanySelectionPage = () => {
   };
 
   return (
-    <Container maxWidth={false} sx={{ py: 3 }}>
+    <Container maxWidth={false} sx={{ py: 3, px: { xs: 2, sm: 3, md: 4 }, width: '100%' }}>
       {/* Page Header */}
       <Paper 
         elevation={0} 
@@ -134,7 +153,8 @@ const CompanySelectionPage = () => {
           borderRadius: 2,
           backgroundColor: 'rgba(46, 125, 50, 0.04)', // Light green background
           border: '1px solid',
-          borderColor: 'primary.light'
+          borderColor: 'primary.light',
+          width: '100%'
         }}
       >
         <Box sx={{ 
@@ -281,38 +301,40 @@ const CompanySelectionPage = () => {
             borderColor: 'divider'
           }}
         >
-          {searchTerm ? (
+          {companies.length === 0 ? (
+            <Box sx={{ textAlign: 'center', mt: 4, p: 3 }}>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                No companies found
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                {user?.role === 'admin' ? 
+                  'No companies have been created yet. Create a new company or wait for users to create their own.' :
+                  'You haven\'t created any companies yet. Create a new company to get started.'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+                {user?.role === 'admin' ? 
+                  'As an admin, you will be able to see all companies created by any user.' :
+                  'You will only see companies that you create.'}
+              </Typography>
+            </Box>
+          ) : (
             <>
               <Typography variant="h6" gutterBottom>No matching companies found</Typography>
               <Typography variant="body2" color="text.secondary">
                 Try a different search term or create a new company.
               </Typography>
             </>
-          ) : (
-            <>
-              <Typography variant="h6" gutterBottom>No companies found</Typography>
-              <Typography variant="body2" color="text.secondary" paragraph>
-                Get started by creating your first company.
-              </Typography>
-              <Button 
-                variant="contained" 
-                color="primary"
-                startIcon={<AddIcon />}
-                onClick={handleOpenDialog}
-                sx={{ mt: 2 }}
-              >
-                Create New Company
-              </Button>
-            </>
           )}
         </Paper>
       ) : (
-        <>
-          {/* Companies Count */}
-          <Box sx={{ mb: 3, display: 'flex', alignItems: 'center' }}>
-            <Typography variant="subtitle1" color="text.secondary">
-              Showing {filteredCompanies.length} {filteredCompanies.length === 1 ? 'company' : 'companies'}
-            </Typography>
+      <>
+        {/* Companies Count */}
+        <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="subtitle1" color="text.secondary">
+            Showing {filteredCompanies.length} {filteredCompanies.length === 1 ? 'company' : 'companies'}
+            {user?.role === 'admin' ? ' (admin view)' : ''}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {searchTerm && (
               <Chip 
                 label={`Search: ${searchTerm}`} 
@@ -320,22 +342,32 @@ const CompanySelectionPage = () => {
                 size="small" 
                 color="primary" 
                 variant="outlined"
-                sx={{ ml: 2 }}
+                sx={{ mr: 2 }}
               />
             )}
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<AddIcon />}
+              onClick={handleOpenDialog}
+            >
+              Create New Company
+            </Button>
           </Box>
+        </Box>
           
           {/* Companies Grid */}
           <Grid container spacing={3}>
             {filteredCompanies.map((company) => (
-              <Grid grid={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={company.id}>
+              <Grid item xs={12} sm={6} md={4} lg={3} key={company.id}>
                 <Card 
                   sx={{ 
                     height: '100%', 
                     display: 'flex', 
                     flexDirection: 'column',
                     position: 'relative',
-                    overflow: 'visible'
+                    overflow: 'visible',
+                    border: company.createdBy === user?.username ? '2px solid #4caf50' : 'none'
                   }}
                 >
                   {/* Company Icon */}
@@ -367,7 +399,7 @@ const CompanySelectionPage = () => {
                     </Typography>
                   </CardContent>
                   
-                  <CardActions sx={{ p: 2, pt: 0, justifyContent: 'space-between' }}>
+                  <CardActions sx={{ p: 2, pt: 0, justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
                     <Button 
                       variant="outlined"
                       color="primary"
@@ -378,7 +410,6 @@ const CompanySelectionPage = () => {
                         navigate(`/questionnaire/${company.id}`);
                       }}
                       fullWidth
-                      sx={{ mr: 1 }}
                     >
                       Assessment
                     </Button>
