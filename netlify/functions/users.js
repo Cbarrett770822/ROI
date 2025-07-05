@@ -88,9 +88,13 @@ try {
 async function connectToDatabase() {
   if (mongoose.connection.readyState !== 1) {
     try {
-      await mongoose.connect('mongodb+srv://admin:wmsadmin@cluster0.kcvzjmk.mongodb.net/roi-warehouse?retryWrites=true&w=majority', {
+      // Updated connection string with correct credentials and database name
+      await mongoose.connect('mongodb+srv://CB770822:goOX1mZbVY41Qkir@cluster0.eslgbjq.mongodb.net/roi-app-db?retryWrites=true&w=majority&appName=Cluster0', {
         useNewUrlParser: true,
         useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 5000, // 5 second timeout for server selection
+        socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+        family: 4, // Use IPv4, skip trying IPv6
       });
       console.log('Connected to MongoDB');
     } catch (error) {

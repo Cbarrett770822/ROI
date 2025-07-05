@@ -121,19 +121,29 @@ try {
 }
 
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme-secret';
-const MONGODB_URI = 'mongodb+srv://admin:wmsadmin@cluster0.kcvzjmk.mongodb.net/roi-warehouse?retryWrites=true&w=majority';
+// Try both connection formats
+const MONGODB_URI = 'mongodb+srv://CB770822:goOX1mZbVY41Qkir@cluster0.eslgbjq.mongodb.net/roi-app-db?retryWrites=true&w=majority&appName=Cluster0';
 
 // Connect to MongoDB
 async function dbConnect() {
   if (mongoose.connection.readyState !== 1) {
     try {
+      // Add more connection options for better reliability
       await mongoose.connect(MONGODB_URI, {
         useNewUrlParser: true,
         useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 5000, // 5 second timeout for server selection
+        socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
+        family: 4, // Use IPv4, skip trying IPv6
       });
-      console.log('Connected to MongoDB in auth-login');
+      console.log('Connected to MongoDB');
     } catch (error) {
       console.error('MongoDB connection error:', error);
+      // Log more detailed error information
+      if (error.name === 'MongoServerSelectionError') {
+        console.error('Server selection timed out. This usually means the server is unreachable.');
+        console.error('Possible causes: IP not whitelisted, network issues, or incorrect credentials');
+      }
       throw error;
     }
   }
