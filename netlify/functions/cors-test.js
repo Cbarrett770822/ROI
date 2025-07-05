@@ -1,7 +1,15 @@
 // Simple CORS test function
 const { corsHeaders, handleCors, addCorsHeaders } = require("./utils/corsHeaders");
 
+const { getCorsHeaders, handleCors, addCorsHeaders } = require('./utils/corsHeaders');
+
 exports.handler = async function(event, context) {
+  // Handle CORS preflight requests first
+  const corsResponse = handleCors(event);
+  if (corsResponse) {
+    return corsResponse;
+  }
+
   // Log detailed request information
   console.log('CORS Test Request:', {
     method: event.httpMethod,
@@ -42,3 +50,6 @@ exports.handler = async function(event, context) {
   console.log('Returning regular response with CORS headers:', corsResponse2);
   return corsResponse2;
 };
+
+
+// Remember to wrap all responses with addCorsHeaders(response, event);
