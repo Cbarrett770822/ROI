@@ -121,7 +121,7 @@ try {
 }
 
 const JWT_SECRET = process.env.JWT_SECRET || 'changeme-secret';
-const MONGODB_URI = 'mongodb+srv://admin:wmsadmin@cluster0.mongodb.net/roi-warehouse?retryWrites=true&w=majority';
+const MONGODB_URI = 'mongodb+srv://admin:wmsadmin@cluster0.kcvzjmk.mongodb.net/roi-warehouse?retryWrites=true&w=majority';
 
 // Connect to MongoDB
 async function dbConnect() {

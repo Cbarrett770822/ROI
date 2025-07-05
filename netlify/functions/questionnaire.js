@@ -112,7 +112,7 @@ const verifyToken = (event) => {
 const connectToDatabase = async () => {
   if (mongoose.connection.readyState !== 1) {
     try {
-      await mongoose.connect('mongodb+srv://admin:wmsadmin@cluster0.mongodb.net/roi-warehouse?retryWrites=true&w=majority', {
+      await mongoose.connect('mongodb+srv://admin:wmsadmin@cluster0.kcvzjmk.mongodb.net/roi-warehouse?retryWrites=true&w=majority', {
         useNewUrlParser: true,
         useUnifiedTopology: true,
       });
