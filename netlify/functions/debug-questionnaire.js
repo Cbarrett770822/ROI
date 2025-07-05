@@ -1,8 +1,6 @@
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
-const { corsHeaders, handleCors, addCorsHeaders } = require("./utils/corsHeaders");
-
-const { getCorsHeaders, handleCors, addCorsHeaders } = require('./utils/corsHeaders');
+const { getCorsHeaders, handleCors, addCorsHeaders } = require("./utils/corsHeaders");
 
 // MongoDB Schema for Company
 const companySchema = new mongoose.Schema({
@@ -42,12 +40,6 @@ const connectToDatabase = async () => {
 };
 
 exports.handler = async function(event, context) {
-  // Handle CORS preflight requests first
-  const corsResponse = handleCors(event);
-  if (corsResponse) {
-    return corsResponse;
-  }
-
   // For faster cold starts
   context.callbackWaitsForEmptyEventLoop = false;
   
@@ -141,8 +133,8 @@ exports.handler = async function(event, context) {
         message: 'Internal server error', 
         error: error.message,
         stack: error.stack
-      }, event)
-    });
+      })
+    }, event);
   }
 };
 

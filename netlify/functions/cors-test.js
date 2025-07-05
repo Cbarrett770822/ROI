@@ -1,12 +1,11 @@
 // Simple CORS test function
-const { corsHeaders, handleCors, addCorsHeaders } = require("./utils/corsHeaders");
-
-const { getCorsHeaders, handleCors, addCorsHeaders } = require('./utils/corsHeaders');
+const { getCorsHeaders, handleCors, addCorsHeaders } = require("./utils/corsHeaders");
 
 exports.handler = async function(event, context) {
   // Handle CORS preflight requests first
   const corsResponse = handleCors(event);
   if (corsResponse) {
+    console.log('Returning CORS preflight response:', corsResponse);
     return corsResponse;
   }
 
@@ -18,13 +17,6 @@ exports.handler = async function(event, context) {
     host: event.headers.host,
     headers: event.headers
   });
-  
-  // Handle CORS preflight requests
-  const corsResponse = handleCors(event);
-  if (corsResponse) {
-    console.log('Returning CORS preflight response:', corsResponse);
-    return corsResponse;
-  }
   
   // For all other requests, return a simple response with CORS headers
   const response = {

@@ -1,6 +1,4 @@
 const mongoose = require("mongoose");
-const { addCorsHeaders } = require("./utils/corsHeaders");
-
 const { getCorsHeaders, handleCors, addCorsHeaders } = require('./utils/corsHeaders');
 
 // Define User schema - matching the one in users.js
@@ -14,8 +12,10 @@ const userSchema = new mongoose.Schema({
 let User;
 try {
   User = mongoose.model('User');
+  console.log('Retrieved existing User model');
 } catch {
   User = mongoose.model('User', userSchema);
+  console.log('Created new User model');
 }
 
 // Connect to MongoDB
@@ -35,16 +35,14 @@ async function connectToDatabase() {
 }
 
 exports.handler = async function(event, context) {
-  // Handle CORS preflight requests first
+  // For faster cold starts
+  context.callbackWaitsForEmptyEventLoop = false;
+  
+  // Handle CORS preflight requests
   const corsResponse = handleCors(event);
   if (corsResponse) {
     return corsResponse;
   }
-
-  // For faster cold starts
-  context.callbackWaitsForEmptyEventLoop = false;
-  
-  console.log('Debug Users - Examining users collection');
   
   try {
     // Connect to the database
@@ -95,7 +93,7 @@ exports.handler = async function(event, context) {
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
           hasPasswordHash: !!user.passwordHash
-        }, event)),
+        })),
         anomalies: anomalies.length > 0 ? anomalies : "No anomalies found"
       })
     }, event);
@@ -108,10 +106,9 @@ exports.handler = async function(event, context) {
         message: 'Error debugging users', 
         error: error.message,
         stack: error.stack 
-      }, event)
+      })
     }, event);
   }
-};
-
+}
 
 // Remember to wrap all responses with addCorsHeaders(response, event);

@@ -2,7 +2,8 @@ const mongoose = require("mongoose");
 const { getCorsHeaders, handleCors, addCorsHeaders } = require("./utils/corsHeaders");
 const jwt = require("jsonwebtoken");
 
-const { getCorsHeaders, handleCors, addCorsHeaders } = require('./utils/corsHeaders');
+// Use the same JWT secret as auth-login.js
+const JWT_SECRET = process.env.JWT_SECRET || 'changeme-secret';
 
 // MongoDB Schema for Company
 const companySchema = new mongoose.Schema({
@@ -43,7 +44,7 @@ const verifyToken = (event) => {
       return { isValid: false, error: 'No token provided' };
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET);
     return { isValid: true, user: decoded };
   } catch (error) {
     console.error('[Auth Debug] Token verification error:', error.message);
@@ -81,18 +82,12 @@ exports.handler = async function(event, context) {
     // Connect to the database
     await connectToDatabase();
     
-    // Handle CORS preflight requests
-    const corsResponse = handleCors(event);
-    if (corsResponse) {
-      return corsResponse;
-    }
-    
     // Verify token for all requests except OPTIONS
     const auth = verifyToken(event);
     if (!auth.isValid) {
       return addCorsHeaders({
         statusCode: 401,
-        body: JSON.stringify({ message: auth.error }, event)
+        body: JSON.stringify({ message: auth.error })
       }, event);
     }
     
@@ -101,7 +96,7 @@ exports.handler = async function(event, context) {
       console.log('[clear-data] Non-admin user attempted to clear data:', auth.user.username);
       return addCorsHeaders({
         statusCode: 403,
-        body: JSON.stringify({ message: 'Only admin users can clear data' }, event)
+        body: JSON.stringify({ message: 'Only admin users can clear data' })
       }, event);
     }
     
@@ -122,7 +117,7 @@ exports.handler = async function(event, context) {
         message: 'Data cleared successfully',
         deletedCompanies: companyResult.deletedCount,
         deletedQuestionnaires: questionnaireResult.deletedCount
-      }, event)
+      })
     }, event);
     
   } catch (error) {
@@ -132,10 +127,9 @@ exports.handler = async function(event, context) {
       body: JSON.stringify({ 
         message: 'Error clearing data',
         error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-      }, event)
+      })
     }, event);
   }
 };
-
 
 // Remember to wrap all responses with addCorsHeaders(response, event);

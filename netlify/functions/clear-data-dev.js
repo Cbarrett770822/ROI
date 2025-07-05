@@ -1,8 +1,6 @@
 const mongoose = require("mongoose");
 const { getCorsHeaders, handleCors, addCorsHeaders } = require("./utils/corsHeaders");
 
-const { getCorsHeaders, handleCors, addCorsHeaders } = require('./utils/corsHeaders');
-
 // MongoDB Schema for Company
 const companySchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -23,7 +21,17 @@ const questionnaireSchema = new mongoose.Schema({
 // Create or get the models
 let Company, Questionnaire;
 try {
-  Company = mongoose.model('Company');
+// Handle CORS preflight requests first
+  const corsResponse = handleCors(event);
+  if (corsResponse) {
+    return corsResponse;
+  }
+
+  // For faster cold starts
+  context.callbackWaitsForEmptyEventLoop = false;
+  
+  try {
+    // Connect  Company = mongoose.model('Company');
 } catch {
   Company = mongoose.model('Company', companySchema);
 }
@@ -51,24 +59,8 @@ const connectToDatabase = async () => {
 };
 
 exports.handler = async function(event, context) {
-  // Handle CORS preflight requests first
-  const corsResponse = handleCors(event);
-  if (corsResponse) {
-    return corsResponse;
-  }
-
-  // For faster cold starts
-  context.callbackWaitsForEmptyEventLoop = false;
-  
-  try {
-    // Connect to the database
+   to the database
     await connectToDatabase();
-    
-    // Handle CORS preflight requests
-    const corsResponse = handleCors(event);
-    if (corsResponse) {
-      return corsResponse;
-    }
     
     // Development mode - no authentication required
     console.log('[clear-data-dev] Development mode - clearing data without authentication');

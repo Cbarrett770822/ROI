@@ -15,8 +15,8 @@ exports.handler = async function(event, context) {
   if (event.httpMethod !== 'POST') {
     return addCorsHeaders({
       statusCode: 405,
-      body: JSON.stringify({ message: 'Method Not Allowed' }, event)
-    });
+      body: JSON.stringify({ message: 'Method Not Allowed' })
+    }, event);
   }
   
   try {
@@ -36,8 +36,8 @@ exports.handler = async function(event, context) {
       body: JSON.stringify({ 
         message: 'Logout successful',
         success: true
-      }, event)
-    });
+      })
+    }, event);
   } catch (err) {
     console.error('Logout error:', err);
     return addCorsHeaders({
@@ -45,8 +45,8 @@ exports.handler = async function(event, context) {
       body: JSON.stringify({ 
         message: 'Logout failed', 
         error: err.message 
-      }, event)
-    });
+      })
+    }, event);
   }
 };
 

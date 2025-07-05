@@ -21,22 +21,32 @@ try {
 }
 
 // Connect to MongoDB
+let cachedDb = null;
 async function connectToDatabase() {
-  if (mongoose.connection.readyState !== 1) {
-    try {
-      // Updated connection string with correct credentials and database name
-      await mongoose.connect('mongodb+srv://CB770822:goOX1mZbVY41Qkir@cluster0.eslgbjq.mongodb.net/roi-app-db?retryWrites=true&w=majority&appName=Cluster0', {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        serverSelectionTimeoutMS: 5000, // 5 second timeout for server selection
-        socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
-        family: 4, // Use IPv4, skip trying IPv6
-      });
-      console.log('Connected to MongoDB');
-    } catch (error) {
-      console.error('MongoDB connection error:', error);
-      throw error;
-    }
+  if (cachedDb) {
+    console.log('Using cached database connection');
+    return cachedDb;
+  }
+  
+  // Use the MongoDB Atlas connection string from environment variables or fallback
+  const uri = process.env.MONGODB_URI || 'mongodb+srv://CB770822:goOX1mZbVY41Qkir@cluster0.eslgbjq.mongodb.net/roi-app-db?retryWrites=true&w=majority&appName=Cluster0';
+  console.log('Connecting to MongoDB...');
+  
+  try {
+    const client = await mongoose.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      family: 4 // Use IPv4, skip trying IPv6
+    });
+    
+    cachedDb = client.connection.db;
+    console.log('MongoDB connected successfully');
+    return cachedDb;
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    throw error;
   }
 }
 
@@ -45,12 +55,19 @@ const verifyToken = (event) => {
   try {
     const token = event.headers.authorization?.split(' ')[1];
     if (!token) {
+      console.log('No token provided in request');
       return { isValid: false, error: 'No token provided' };
     }
     
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Use fallback secret if environment variable is not set
+    const jwtSecret = process.env.JWT_SECRET || 'changeme-secret';
+    console.log('Verifying token with secret');
+    
+    const decoded = jwt.verify(token, jwtSecret);
+    console.log('Token verified successfully for user:', decoded.username);
     return { isValid: true, user: decoded };
   } catch (error) {
+    console.error('Token verification failed:', error.message);
     return { isValid: false, error: 'Invalid token' };
   }
 };
@@ -61,12 +78,6 @@ const isAdmin = (user) => {
 };
 
 exports.handler = async function(event, context) {
-  // Handle CORS preflight requests first
-  const corsResponse = handleCors(event);
-  if (corsResponse) {
-    return corsResponse;
-  }
-  
   // For faster cold starts
   context.callbackWaitsForEmptyEventLoop = false;
   
@@ -92,7 +103,7 @@ exports.handler = async function(event, context) {
     console.log('Invalid token, returning 401');
     return addCorsHeaders({
       statusCode: 401,
-      body: JSON.stringify({ message: auth.error }, event)
+      body: JSON.stringify({ message: auth.error })
     }, event);
   }
   
@@ -100,7 +111,7 @@ exports.handler = async function(event, context) {
   if (!isAdmin(auth.user)) {
     return addCorsHeaders({
       statusCode: 403,
-      body: JSON.stringify({ message: 'Admin access required' }, event)
+      body: JSON.stringify({ message: 'Admin access required' })
     }, event);
   }
   
@@ -116,7 +127,7 @@ exports.handler = async function(event, context) {
         console.log('Found users:', users);
         const response = addCorsHeaders({
           statusCode: 200,
-          body: JSON.stringify({ users }, event)
+          body: JSON.stringify({ users })
         }, event);
         console.log('Sending response with headers:', response.headers);
         return response;
@@ -124,7 +135,7 @@ exports.handler = async function(event, context) {
         console.error('Error fetching users:', error);
         return addCorsHeaders({
           statusCode: 500,
-          body: JSON.stringify({ message: 'Error fetching users', error: error.message }, event)
+          body: JSON.stringify({ message: 'Error fetching users', error: error.message })
         }, event);
       }
     }
@@ -137,7 +148,7 @@ exports.handler = async function(event, context) {
       if (!username || !password || !role) {
         return addCorsHeaders({
           statusCode: 400,
-          body: JSON.stringify({ message: 'Username, password and role are required' }, event)
+          body: JSON.stringify({ message: 'Username, password and role are required' })
         }, event);
       }
       
@@ -146,7 +157,7 @@ exports.handler = async function(event, context) {
       if (existingUser) {
         return addCorsHeaders({
           statusCode: 409,
-          body: JSON.stringify({ message: 'Username already exists' }, event)
+          body: JSON.stringify({ message: 'Username already exists' })
         }, event);
       }
       
@@ -161,7 +172,7 @@ exports.handler = async function(event, context) {
       
       return addCorsHeaders({
         statusCode: 201,
-        body: JSON.stringify({ message: 'User created successfully', user: userResponse }, event)
+        body: JSON.stringify({ message: 'User created successfully', user: userResponse })
       }, event);
     }
     
@@ -173,7 +184,7 @@ exports.handler = async function(event, context) {
       if (!userId || (!username && !password && !role)) {
         return addCorsHeaders({
           statusCode: 400,
-          body: JSON.stringify({ message: 'User ID and at least one field to update are required' }, event)
+          body: JSON.stringify({ message: 'User ID and at least one field to update are required' })
         }, event);
       }
       
@@ -182,7 +193,7 @@ exports.handler = async function(event, context) {
       if (!user) {
         return addCorsHeaders({
           statusCode: 404,
-          body: JSON.stringify({ message: 'User not found' }, event)
+          body: JSON.stringify({ message: 'User not found' })
         }, event);
       }
       
@@ -199,7 +210,7 @@ exports.handler = async function(event, context) {
       
       return addCorsHeaders({
         statusCode: 200,
-        body: JSON.stringify({ message: 'User updated successfully', user: userResponse }, event)
+        body: JSON.stringify({ message: 'User updated successfully', user: userResponse })
       }, event);
     }
     
@@ -211,7 +222,7 @@ exports.handler = async function(event, context) {
       if (!userId) {
         return addCorsHeaders({
           statusCode: 400,
-          body: JSON.stringify({ message: 'User ID is required' }, event)
+          body: JSON.stringify({ message: 'User ID is required' })
         }, event);
       }
       
@@ -219,7 +230,7 @@ exports.handler = async function(event, context) {
       if (userId === auth.user.id) {
         return addCorsHeaders({
           statusCode: 400,
-          body: JSON.stringify({ message: 'Cannot delete your own account' }, event)
+          body: JSON.stringify({ message: 'Cannot delete your own account' })
         }, event);
       }
       
@@ -228,27 +239,27 @@ exports.handler = async function(event, context) {
       if (!result) {
         return addCorsHeaders({
           statusCode: 404,
-          body: JSON.stringify({ message: 'User not found' }, event)
+          body: JSON.stringify({ message: 'User not found' })
         }, event);
       }
       
       return addCorsHeaders({
         statusCode: 200,
-        body: JSON.stringify({ message: 'User deleted successfully' }, event)
+        body: JSON.stringify({ message: 'User deleted successfully' })
       }, event);
     }
     
     // Method not allowed
     return addCorsHeaders({
       statusCode: 405,
-      body: JSON.stringify({ message: 'Method not allowed' }, event)
+      body: JSON.stringify({ message: 'Method not allowed' })
     }, event);
     
   } catch (error) {
     console.error('Error in users function:', error);
     return addCorsHeaders({
       statusCode: 500,
-      body: JSON.stringify({ message: 'Server error', error: error.message }, event)
+      body: JSON.stringify({ message: 'Server error', error: error.message })
     }, event);
   }
 };
