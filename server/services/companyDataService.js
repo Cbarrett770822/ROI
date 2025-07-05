@@ -1,108 +1,55 @@
+const Company = require('../models/Company');
+const connectDB = require('../db');
 const fs = require('fs').promises;
 const path = require('path');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
-const COMPANIES_FILE = path.join(DATA_DIR, 'companies.json');
-const DEFAULT_COMPANIES = [
-  { id: '1', name: 'Acme Corporation' }
-];
 
-// Ensure data directory exists
+// Initialize DB connection (no-op for Mongo, but keep for compatibility)
 async function initDataDirectory() {
   try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    
-    // Check if companies file exists, create with defaults if not
-    try {
-      await fs.access(COMPANIES_FILE);
-    } catch (err) {
-      await fs.writeFile(COMPANIES_FILE, JSON.stringify(DEFAULT_COMPANIES, null, 2));
-      console.log('Created default companies file');
-    }
+    await connectDB();
+    console.log('Connected to MongoDB Atlas');
   } catch (err) {
-    console.error('Error initializing data directory:', err);
+    console.error('Error connecting to MongoDB Atlas:', err);
+    throw err;
   }
 }
 
 // Get all companies
 async function getCompanies() {
-  try {
-    const data = await fs.readFile(COMPANIES_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch (err) {
-    console.error('Error reading companies file:', err);
-    return DEFAULT_COMPANIES;
-  }
+  await connectDB();
+  return Company.find({}).lean();
 }
 
 // Create a new company
 async function createCompany(companyData) {
-  try {
-    const companies = await getCompanies();
-    const newCompany = {
-      ...companyData,
-      createdAt: new Date().toISOString()
-    };
-    
-    companies.push(newCompany);
-    await fs.writeFile(COMPANIES_FILE, JSON.stringify(companies, null, 2));
-    
-    return newCompany;
-  } catch (err) {
-    console.error('Error creating company:', err);
-    throw err;
-  }
+  await connectDB();
+  const company = new Company({
+    name: companyData.name,
+    createdAt: new Date()
+  });
+  return company.save();
 }
 
 // Update a company
 async function updateCompany(companyId, companyData) {
-  try {
-    const companies = await getCompanies();
-    const index = companies.findIndex(c => c.id === companyId);
-    
-    if (index === -1) {
-      throw new Error(`Company with ID ${companyId} not found`);
-    }
-    
-    companies[index] = {
-      ...companies[index],
-      ...companyData,
-      updatedAt: new Date().toISOString()
-    };
-    
-    await fs.writeFile(COMPANIES_FILE, JSON.stringify(companies, null, 2));
-    return companies[index];
-  } catch (err) {
-    console.error(`Error updating company ${companyId}:`, err);
-    throw err;
-  }
+  await connectDB();
+  const updated = await Company.findByIdAndUpdate(
+    companyId,
+    { ...companyData, updatedAt: new Date() },
+    { new: true }
+  ).lean();
+  if (!updated) throw new Error(`Company with ID ${companyId} not found`);
+  return updated;
 }
 
 // Delete a company
 async function deleteCompany(companyId) {
-  try {
-    const companies = await getCompanies();
-    const filteredCompanies = companies.filter(c => c.id !== companyId);
-    
-    if (companies.length === filteredCompanies.length) {
-      throw new Error(`Company with ID ${companyId} not found`);
-    }
-    
-    await fs.writeFile(COMPANIES_FILE, JSON.stringify(filteredCompanies, null, 2));
-    
-    // Also delete company data file if it exists
-    try {
-      const companyFile = path.join(DATA_DIR, `company_${companyId}.json`);
-      await fs.unlink(companyFile);
-    } catch (err) {
-      // Ignore if file doesn't exist
-    }
-    
-    return { success: true };
-  } catch (err) {
-    console.error(`Error deleting company ${companyId}:`, err);
-    throw err;
-  }
+  await connectDB();
+  const deleted = await Company.findByIdAndDelete(companyId);
+  if (!deleted) throw new Error(`Company with ID ${companyId} not found`);
+  return { success: true };
 }
 
 // Save company data (questionnaire answers, etc.)

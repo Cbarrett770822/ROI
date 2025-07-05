@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ROI API Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+    button { padding: 10px; margin: 5px; cursor: pointer; }
+    pre { background: #f5f5f5; padding: 10px; border-radius: 5px; overflow: auto; }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <h1>ROI API Test Page</h1>
+  
+  <div>
+    <h2>Authentication</h2>
+    <div>
+      <input type="text" id="username" placeholder="Username" value="admin">
+      <input type="password" id="password" placeholder="Password" value="admin123">
+      <button id="login-btn">Login</button>
+    </div>
+    <pre id="auth-result"></pre>
+  </div>
+  
+  <div>
+    <h2>API Tests</h2>
+    <button id="test-users-btn">Test Users API</button>
+    <pre id="api-result"></pre>
+  </div>
+  
+  <script>
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      // Get button elements
+      const loginBtn = document.getElementById('login-btn');
+      const testUsersBtn = document.getElementById('test-users-btn');
+      
+      // Add event listeners
+      loginBtn.addEventListener('click', login);
+      testUsersBtn.addEventListener('click', testUsers);
+      
+      // Login function
+      async function login() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const authResult = document.getElementById('auth-result');
+        
+        try {
+          authResult.textContent = 'Logging in...';
+          
+          const response = await fetch('/.netlify/functions/auth-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+          });
+          
+          const data = await response.json();
+          
+          if (data.token) {
+            localStorage.setItem('token', data.token);
+            authResult.className = 'success';
+            authResult.textContent = `Login successful! Token: ${data.token.substring(0, 20)}...`;
+          } else {
+            authResult.className = 'error';
+            authResult.textContent = `Login failed: ${JSON.stringify(data)}`;
+          }
+        } catch (error) {
+          authResult.className = 'error';
+          authResult.textContent = `Error: ${error.message}`;
+        }
+      }
+      
+      // Test Users API
+      async function testUsers() {
+        const apiResult = document.getElementById('api-result');
+        
+        try {
+          apiResult.textContent = 'Fetching users...';
+          
+          const token = localStorage.getItem('token');
+          if (!token) {
+            apiResult.className = 'error';
+            apiResult.textContent = 'No token found. Please login first.';
+            return;
+          }
+          
+          const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          };
+          
+          apiResult.textContent += `\nRequest headers: ${JSON.stringify(headers, null, 2)}`;
+          
+          const response = await fetch('/.netlify/functions/users', {
+            method: 'GET',
+            headers: headers
+          });
+          
+          apiResult.textContent += `\nResponse status: ${response.status}`;
+          
+          const contentType = response.headers.get('content-type');
+          apiResult.textContent += `\nResponse content type: ${contentType}`;
+          
+          if (contentType && contentType.includes('application/json')) {
+            const data = await response.json();
+            apiResult.className = 'success';
+            apiResult.textContent += `\nUsers: ${JSON.stringify(data, null, 2)}`;
+          } else {
+            const text = await response.text();
+            apiResult.className = 'error';
+            apiResult.textContent += `\nNon-JSON response: ${text}`;
+          }
+        } catch (error) {
+          apiResult.className = 'error';
+          apiResult.textContent += `\nError: ${error.message}`;
+        }
+      }
+    });
+  </script>
+</body>
+</html>

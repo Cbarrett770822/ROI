@@ -14,22 +14,10 @@
 [functions]
   node_bundler = "esbuild"
 
-# Redirect API requests to serverless functions with CORS headers
-# This is the primary way we handle CORS in this application
+# Simple redirect for API requests to serverless functions
+# No CORS headers needed with unified deployment
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
   status = 200
   force = true
-  # Use specific allowed origins for better CORS security
-  headers = {Access-Control-Allow-Origin = "https://wms-roi.netlify.app", Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS", Access-Control-Allow-Headers = "Content-Type, Authorization, Accept, Cache-Control, Pragma", Access-Control-Allow-Credentials = "true", Access-Control-Max-Age = "86400"}
-
-# Add headers for direct function access
-[[headers]]
-  for = "/.netlify/functions/*"
-  [headers.values]
-    Access-Control-Allow-Origin = "https://wms-roi.netlify.app"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization, Accept, Cache-Control, Pragma"
-    Access-Control-Allow-Credentials = "true"
-    Access-Control-Max-Age = "86400"

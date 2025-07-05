@@ -1,12 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const { v4: uuidv4 } = require('uuid');
-const companyDataService = require('../services/companyDataService');
+const authenticateJWT = require('../middleware/auth');
+const Company = require('../models/Company');
 
 // GET all companies
-router.get('/', async (req, res) => {
+router.get('/', authenticateJWT, async (req, res) => {
   try {
-    const companies = await companyDataService.getCompanies();
+    let companies;
+    if (req.user.role === 'admin') {
+      companies = await Company.find({}).sort({ createdAt: -1 });
+    } else {
+      companies = await Company.find({ createdBy: req.user.userId }).sort({ createdAt: -1 });
+    }
     res.json(companies);
   } catch (err) {
     console.error('Error fetching companies:', err);
@@ -32,19 +37,16 @@ router.get('/:id', async (req, res) => {
 });
 
 // CREATE a new company
-router.post('/', async (req, res) => {
+router.post('/', authenticateJWT, async (req, res) => {
   try {
     if (!req.body.name || req.body.name.trim() === '') {
       return res.status(400).json({ error: 'Company name is required' });
     }
-    
-    const newCompany = {
-      id: uuidv4(),
+    const newCompany = new Company({
       name: req.body.name.trim(),
-      createdAt: new Date().toISOString()
-    };
-    
-    const savedCompany = await companyDataService.createCompany(newCompany);
+      createdBy: req.user.userId
+    });
+    const savedCompany = await newCompany.save();
     res.status(201).json(savedCompany);
   } catch (err) {
     console.error('Error creating company:', err);

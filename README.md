@@ -1,12 +1,53 @@
-# React + Vite
+# ROI Warehouse Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A comprehensive warehouse management system built with React, Redux, and Netlify Functions.
 
-Currently, two official plugins are available:
+## Architecture
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This application uses a unified deployment architecture where both the frontend and backend are deployed to the same Netlify site. This approach eliminates CORS issues by ensuring all API requests stay within the same domain.
 
-## Expanding the ESLint configuration
+### Frontend
+- React with Redux for state management
+- Vite for fast development and optimized builds
+- Material UI for component styling
+- Axios for API requests
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Backend
+- Netlify Functions (serverless) for API endpoints
+- MongoDB Atlas for data storage
+- JWT for authentication
+
+## Deployment
+
+The application is deployed to Netlify with both frontend and backend on the same site:
+
+- Production URL: https://wms-roi.netlify.app
+- API endpoints: https://wms-roi.netlify.app/.netlify/functions/*
+
+## Development
+
+### Prerequisites
+- Node.js (v14+)
+- npm or yarn
+- MongoDB Atlas account (or local MongoDB for development)
+
+### Setup
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Create a `.env` file with the following variables:
+   ```
+   JWT_SECRET=your_jwt_secret
+   MONGODB_URI=your_mongodb_connection_string
+   ```
+4. Start the development server: `npm run dev`
+
+### Unified Deployment
+This project uses a unified deployment approach where both frontend and backend are deployed to the same Netlify site. This eliminates CORS issues and simplifies the architecture.
+
+Key benefits:
+- No CORS headers or preflight requests needed
+- Simplified API URL configuration (using relative paths)
+- Reduced network overhead
+- Easier maintenance
+
+For more details, see the [UNIFIED_DEPLOYMENT_PLAN.md](./UNIFIED_DEPLOYMENT_PLAN.md) and [UNIFIED_DEPLOYMENT_CHECKLIST.md](./UNIFIED_DEPLOYMENT_CHECKLIST.md) files.

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            background-color: #f5f5f5;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input {
+            padding: 8px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>CORS Test Tool</h1>
+    
+    <div>
+        <h3>API Endpoint</h3>
+        <input type="text" id="endpoint" value="https://roi-wms-app.netlify.app/.netlify/functions/cors-test" />
+    </div>
+    
+    <div>
+        <h3>Test Actions</h3>
+        <button onclick="testGET()">Test GET Request</button>
+        <button onclick="testOPTIONS()">Test OPTIONS Request</button>
+        <button onclick="testWithCredentials()">Test with Credentials</button>
+    </div>
+    
+    <div>
+        <h3>Results</h3>
+        <div id="result" class="result">Results will appear here...</div>
+    </div>
+    
+    <script>
+        // Function to display results
+        function displayResult(title, data) {
+            const resultElement = document.getElementById('result');
+            
+            // Format the data for display
+            let formattedData;
+            if (typeof data === 'object') {
+                formattedData = JSON.stringify(data, null, 2);
+            } else {
+                formattedData = data.toString();
+            }
+            
+            resultElement.innerHTML = `<strong>${title}</strong>\n\n${formattedData}`;
+        }
+        
+        // Test GET request
+        async function testGET() {
+            try {
+                const endpoint = document.getElementById('endpoint').value;
+                displayResult('Sending GET request...', { endpoint });
+                
+                const response = await fetch(endpoint, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const responseHeaders = {};
+                response.headers.forEach((value, key) => {
+                    responseHeaders[key] = value;
+                });
+                
+                const data = await response.json();
+                
+                displayResult('GET Request Result', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: responseHeaders,
+                    data: data
+                });
+            } catch (error) {
+                displayResult('GET Request Error', {
+                    message: error.message,
+                    stack: error.stack
+                });
+            }
+        }
+        
+        // Test OPTIONS request
+        async function testOPTIONS() {
+            try {
+                const endpoint = document.getElementById('endpoint').value;
+                displayResult('Sending OPTIONS request...', { endpoint });
+                
+                const response = await fetch(endpoint, {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Access-Control-Request-Method': 'GET',
+                        'Access-Control-Request-Headers': 'Content-Type, Authorization'
+                    }
+                });
+                
+                const responseHeaders = {};
+                response.headers.forEach((value, key) => {
+                    responseHeaders[key] = value;
+                });
+                
+                displayResult('OPTIONS Request Result', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: responseHeaders
+                });
+            } catch (error) {
+                displayResult('OPTIONS Request Error', {
+                    message: error.message,
+                    stack: error.stack
+                });
+            }
+        }
+        
+        // Test with credentials
+        async function testWithCredentials() {
+            try {
+                const endpoint = document.getElementById('endpoint').value;
+                displayResult('Sending GET request with credentials...', { endpoint });
+                
+                const response = await fetch(endpoint, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const responseHeaders = {};
+                response.headers.forEach((value, key) => {
+                    responseHeaders[key] = value;
+                });
+                
+                const data = await response.json();
+                
+                displayResult('GET with Credentials Result', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: responseHeaders,
+                    data: data
+                });
+            } catch (error) {
+                displayResult('GET with Credentials Error', {
+                    message: error.message,
+                    stack: error.stack
+                });
+            }
+        }
+    </script>
+</body>
+</html>

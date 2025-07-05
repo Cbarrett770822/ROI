@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // Set up axios defaults
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8888';
+// Using relative path for unified deployment
+axios.defaults.baseURL = '/.netlify/functions';
 axios.defaults.headers.common['Content-Type'] = 'application/json';
 
 // Add authorization header if token exists

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Token Extractor</title>
+    <script>
+        function extractToken() {
+            const token = localStorage.getItem('authToken');
+            document.getElementById('tokenOutput').value = token || '';
+            document.getElementById('tokenForm').submit();
+        }
+    </script>
+</head>
+<body onload="extractToken()">
+    <form id="tokenForm" method="POST" action="about:blank">
+        <input type="hidden" id="tokenOutput" name="token">
+    </form>
+    <p>Extracting token from localStorage...</p>
+</body>
+</html>
