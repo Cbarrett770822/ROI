@@ -24,10 +24,12 @@
   # Use wildcard origin to allow both production and development environments
   headers = {Access-Control-Allow-Origin = "*", Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS", Access-Control-Allow-Headers = "Content-Type, Authorization, Accept, Cache-Control, Pragma", Access-Control-Allow-Credentials = "true", Access-Control-Max-Age = "86400"}
 
-# Direct access to functions should also have CORS headers
-[[redirects]]
-  from = "/.netlify/functions/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-  # Use wildcard origin to allow both production and development environments
-  headers = {Access-Control-Allow-Origin = "*", Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS", Access-Control-Allow-Headers = "Content-Type, Authorization, Accept, Cache-Control, Pragma", Access-Control-Allow-Credentials = "true", Access-Control-Max-Age = "86400"}
+# Add headers for direct function access
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, Accept, Cache-Control, Pragma"
+    Access-Control-Allow-Credentials = "true"
+    Access-Control-Max-Age = "86400"
