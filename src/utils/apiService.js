@@ -16,9 +16,9 @@ export const makeAuthenticatedRequest = async (endpoint, options = {}) => {
     // Normalize the API URL
     let url = endpoint;
     if (!endpoint.startsWith('http')) {
-      // If it's a relative URL, use the new /api/ path instead of /.netlify/functions/
-      if (!endpoint.startsWith('/api/') && !endpoint.startsWith('/.netlify/functions/')) {
-        url = `${config.apiUrl}/api/${endpoint}`;
+      // If it's a relative URL, ensure it uses the /.netlify/functions/ prefix
+      if (!endpoint.startsWith('/.netlify/functions/')) {
+        url = `${config.apiUrl}/.netlify/functions/${endpoint.replace(/^\/|^\/api\//, '')}`;
       } else {
         url = `${config.apiUrl}${endpoint}`;
       }
@@ -68,9 +68,9 @@ export const makeRequest = async (endpoint, options = {}) => {
     // Normalize the API URL
     let url = endpoint;
     if (!endpoint.startsWith('http')) {
-      // If it's a relative URL, use the new /api/ path instead of /.netlify/functions/
-      if (!endpoint.startsWith('/api/') && !endpoint.startsWith('/.netlify/functions/')) {
-        url = `${config.apiUrl}/api/${endpoint}`;
+      // If it's a relative URL, ensure it uses the /.netlify/functions/ prefix
+      if (!endpoint.startsWith('/.netlify/functions/')) {
+        url = `${config.apiUrl}/.netlify/functions/${endpoint.replace(/^\/|^\/api\//, '')}`;
       } else {
         url = `${config.apiUrl}${endpoint}`;
       }
