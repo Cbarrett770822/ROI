@@ -46,7 +46,7 @@ import {
   selectCompaniesError
 } from '../redux/slices/companiesSlice';
 import { setLoading } from '../redux/slices/uiSlice';
-import { selectUser } from '../store/authSlice';
+import { selectUser } from '../redux/slices/authSlice';
 
 /**
  * Company Selection Page component
