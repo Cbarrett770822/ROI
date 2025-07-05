@@ -24,20 +24,34 @@ try {
 }
 
 // Connect to MongoDB
-const connectToDatabase = async () => {
-  if (mongoose.connection.readyState !== 1) {
-    try {
-      await mongoose.connect(process.env.MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-      });
-      console.log('Connected to MongoDB in debug-questionnaire function');
-    } catch (error) {
-      console.error('MongoDB connection error:', error);
-      throw error;
-    }
+let cachedDb = null;
+async function connectToDatabase() {
+  if (cachedDb) {
+    console.log('Using cached database connection');
+    return cachedDb;
   }
-};
+  
+  // Use the MongoDB Atlas connection string from environment variables or fallback
+  const uri = process.env.MONGODB_URI || 'mongodb+srv://CB770822:goOX1mZbVY41Qkir@cluster0.eslgbjq.mongodb.net/roi-app-db?retryWrites=true&w=majority&appName=Cluster0';
+  console.log('Connecting to MongoDB...');
+  
+  try {
+    const client = await mongoose.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      family: 4 // Use IPv4, skip trying IPv6
+    });
+    
+    cachedDb = client.connection.db;
+    console.log('MongoDB connected successfully in debug-questionnaire function');
+    return cachedDb;
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    throw error;
+  }
+}
 
 exports.handler = async function(event, context) {
   // For faster cold starts
