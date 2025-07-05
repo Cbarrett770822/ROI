@@ -11,12 +11,7 @@ const getCorsHeaders = (event) => {
   // Get origin from request headers
   const origin = event && event.headers && event.headers.origin;
   
-  // For simplicity and to match netlify.toml configuration, use wildcard origin
-  // This allows requests from any origin, which is fine for this application
-  // since we're using JWT authentication for security
-  
-  // If you need to restrict origins in the future, uncomment this code:
-  /*
+  // Use specific allowed origins instead of wildcard to fix CORS issues
   const allowedOrigins = [
     'http://localhost:8888', 
     'http://localhost:8889', 
@@ -25,13 +20,13 @@ const getCorsHeaders = (event) => {
     'https://roi-wms-app.netlify.app'
   ];
   
+  // If the origin is in our allowed list, return that specific origin
+  // Otherwise use wildcard as fallback
   const allowedOrigin = origin && allowedOrigins.includes(origin)
     ? origin
     : '*';
-  */
-  
-  // Use wildcard origin to allow requests from any origin
-  const allowedOrigin = '*';
+    
+  console.log(`[CORS] Request from origin: ${origin}, allowed origin: ${allowedOrigin}`);
     
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
