@@ -2,8 +2,8 @@
 const config = {
   // API URL - automatically use the Netlify URL in production or local development URL
   apiUrl: process.env.NODE_ENV === 'production' 
-    ? 'https://roi-wms-app.netlify.app' // Use the explicit backend URL in production
-    : 'https://roi-wms-app.netlify.app',
+    ? '' // Empty string for production (relative URLs will work with Netlify since frontend and backend are on same domain)
+    : 'http://localhost:8888', // Use localhost for development
     
   // JWT token settings
   tokenKey: 'token',
