@@ -74,8 +74,8 @@ export default function UserManagementPage() {
         throw new Error('No authentication token found. Please log in again.');
       }
       
-      // Make the API request with proper URL path - authFetch now returns parsed JSON
-      const data = await authFetch('https://roi-wms-app.netlify.app/.netlify/functions/users');
+      // Make the API request with relative path for unified deployment
+      const data = await authFetch('/.netlify/functions/users');
       console.log('Users API response data:', data);
       
       // Validate response structure
@@ -108,7 +108,7 @@ export default function UserManagementPage() {
     try {
       if (isEditing) {
         // Update existing user - authFetch now returns parsed JSON
-        const data = await authFetch('https://roi-wms-app.netlify.app/.netlify/functions/users', {
+        const data = await authFetch('/.netlify/functions/users', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -127,7 +127,7 @@ export default function UserManagementPage() {
         showNotification('User updated successfully', 'success');
       } else {
         // Create new user - authFetch now returns parsed JSON
-        const data = await authFetch('https://roi-wms-app.netlify.app/.netlify/functions/users', {
+        const data = await authFetch('/.netlify/functions/users', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password, role })
@@ -156,7 +156,7 @@ export default function UserManagementPage() {
     if (!userToDelete) return;
     
     try {
-      const data = await authFetch('https://roi-wms-app.netlify.app/.netlify/functions/users', {
+      const data = await authFetch('/.netlify/functions/users', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: userToDelete._id })

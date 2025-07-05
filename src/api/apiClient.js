@@ -4,7 +4,7 @@ import { setLoading } from '../redux/slices/uiSlice';
 
 // Create a base API client with default configuration
 const apiClient = axios.create({
-  baseURL: '',  // Empty baseURL for Netlify deployment
+  baseURL: window.location.origin,  // Use current origin for unified deployment
   timeout: 30000, // 30 seconds
   headers: {
     'Content-Type': 'application/json',
@@ -33,8 +33,8 @@ apiClient.interceptors.request.use(
     const fullUrl = config.baseURL ? `${config.baseURL}${config.url}` : config.url;
     console.log(`Making API request to: ${fullUrl}`);
     
-    // In development, if we're using relative URLs without a baseURL, prepend the Netlify dev server URL
-    if (!config.baseURL && import.meta.env.MODE === 'development') {
+    // In development, if we're testing locally, use the Netlify dev server URL
+    if (import.meta.env.MODE === 'development' && window.location.port !== '8888') {
       config.baseURL = 'http://localhost:8888';
     }
     
