@@ -4,7 +4,7 @@ import { setLoading } from '../redux/slices/uiSlice';
 
 // Create a base API client with default configuration
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8888',
+  baseURL: '',  // Empty baseURL for Netlify deployment
   timeout: 30000, // 30 seconds
   headers: {
     'Content-Type': 'application/json',
@@ -27,6 +27,15 @@ apiClient.interceptors.request.use(
       // Add the Netlify Functions prefix to the URL
       config.url = `/.netlify/functions/${config.url.replace(/^\//, '')}`;
       console.log(`Normalized API URL to: ${config.url}`);
+    }
+    
+    // Log the full URL for debugging
+    const fullUrl = config.baseURL ? `${config.baseURL}${config.url}` : config.url;
+    console.log(`Making API request to: ${fullUrl}`);
+    
+    // In development, if we're using relative URLs without a baseURL, prepend the Netlify dev server URL
+    if (!config.baseURL && import.meta.env.MODE === 'development') {
+      config.baseURL = 'http://localhost:8888';
     }
     
     // Set loading state to true when request starts
