@@ -132,7 +132,7 @@ exports.handler = async function(event, context) {
     return addCorsHeaders({
       statusCode: 200,
       body: JSON.stringify(debugInfo)
-    });
+    }, event);
   } catch (error) {
     console.error('Error in debug-questionnaire function:', error);
     return addCorsHeaders({
@@ -141,7 +141,7 @@ exports.handler = async function(event, context) {
         message: 'Internal server error', 
         error: error.message,
         stack: error.stack
-      })
+      }, event)
     });
   }
 };

@@ -88,7 +88,7 @@ exports.handler = async function(event, context) {
         message: 'Data cleared successfully',
         deletedCompanies: companyResult.deletedCount,
         deletedQuestionnaires: questionnaireResult.deletedCount
-      })
+      }, event)
     }, event);
     
   } catch (error) {
@@ -98,7 +98,7 @@ exports.handler = async function(event, context) {
       body: JSON.stringify({ 
         message: 'Error clearing data',
         error: error.message
-      })
+      }, event)
     }, event);
   }
 };

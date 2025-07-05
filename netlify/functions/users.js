@@ -92,7 +92,7 @@ exports.handler = async function(event, context) {
     console.log('Invalid token, returning 401');
     return addCorsHeaders({
       statusCode: 401,
-      body: JSON.stringify({ message: auth.error })
+      body: JSON.stringify({ message: auth.error }, event)
     }, event);
   }
   
@@ -100,7 +100,7 @@ exports.handler = async function(event, context) {
   if (!isAdmin(auth.user)) {
     return addCorsHeaders({
       statusCode: 403,
-      body: JSON.stringify({ message: 'Admin access required' })
+      body: JSON.stringify({ message: 'Admin access required' }, event)
     }, event);
   }
   
@@ -116,7 +116,7 @@ exports.handler = async function(event, context) {
         console.log('Found users:', users);
         const response = addCorsHeaders({
           statusCode: 200,
-          body: JSON.stringify({ users })
+          body: JSON.stringify({ users }, event)
         }, event);
         console.log('Sending response with headers:', response.headers);
         return response;
@@ -124,7 +124,7 @@ exports.handler = async function(event, context) {
         console.error('Error fetching users:', error);
         return addCorsHeaders({
           statusCode: 500,
-          body: JSON.stringify({ message: 'Error fetching users', error: error.message })
+          body: JSON.stringify({ message: 'Error fetching users', error: error.message }, event)
         }, event);
       }
     }
@@ -137,7 +137,7 @@ exports.handler = async function(event, context) {
       if (!username || !password || !role) {
         return addCorsHeaders({
           statusCode: 400,
-          body: JSON.stringify({ message: 'Username, password and role are required' })
+          body: JSON.stringify({ message: 'Username, password and role are required' }, event)
         }, event);
       }
       
@@ -146,7 +146,7 @@ exports.handler = async function(event, context) {
       if (existingUser) {
         return addCorsHeaders({
           statusCode: 409,
-          body: JSON.stringify({ message: 'Username already exists' })
+          body: JSON.stringify({ message: 'Username already exists' }, event)
         }, event);
       }
       
@@ -161,7 +161,7 @@ exports.handler = async function(event, context) {
       
       return addCorsHeaders({
         statusCode: 201,
-        body: JSON.stringify({ message: 'User created successfully', user: userResponse })
+        body: JSON.stringify({ message: 'User created successfully', user: userResponse }, event)
       }, event);
     }
     
@@ -173,7 +173,7 @@ exports.handler = async function(event, context) {
       if (!userId || (!username && !password && !role)) {
         return addCorsHeaders({
           statusCode: 400,
-          body: JSON.stringify({ message: 'User ID and at least one field to update are required' })
+          body: JSON.stringify({ message: 'User ID and at least one field to update are required' }, event)
         }, event);
       }
       
@@ -182,7 +182,7 @@ exports.handler = async function(event, context) {
       if (!user) {
         return addCorsHeaders({
           statusCode: 404,
-          body: JSON.stringify({ message: 'User not found' })
+          body: JSON.stringify({ message: 'User not found' }, event)
         }, event);
       }
       
@@ -199,7 +199,7 @@ exports.handler = async function(event, context) {
       
       return addCorsHeaders({
         statusCode: 200,
-        body: JSON.stringify({ message: 'User updated successfully', user: userResponse })
+        body: JSON.stringify({ message: 'User updated successfully', user: userResponse }, event)
       }, event);
     }
     
@@ -211,7 +211,7 @@ exports.handler = async function(event, context) {
       if (!userId) {
         return addCorsHeaders({
           statusCode: 400,
-          body: JSON.stringify({ message: 'User ID is required' })
+          body: JSON.stringify({ message: 'User ID is required' }, event)
         }, event);
       }
       
@@ -219,7 +219,7 @@ exports.handler = async function(event, context) {
       if (userId === auth.user.id) {
         return addCorsHeaders({
           statusCode: 400,
-          body: JSON.stringify({ message: 'Cannot delete your own account' })
+          body: JSON.stringify({ message: 'Cannot delete your own account' }, event)
         }, event);
       }
       
@@ -228,27 +228,27 @@ exports.handler = async function(event, context) {
       if (!result) {
         return addCorsHeaders({
           statusCode: 404,
-          body: JSON.stringify({ message: 'User not found' })
+          body: JSON.stringify({ message: 'User not found' }, event)
         }, event);
       }
       
       return addCorsHeaders({
         statusCode: 200,
-        body: JSON.stringify({ message: 'User deleted successfully' })
+        body: JSON.stringify({ message: 'User deleted successfully' }, event)
       }, event);
     }
     
     // Method not allowed
     return addCorsHeaders({
       statusCode: 405,
-      body: JSON.stringify({ message: 'Method not allowed' })
+      body: JSON.stringify({ message: 'Method not allowed' }, event)
     }, event);
     
   } catch (error) {
     console.error('Error in users function:', error);
     return addCorsHeaders({
       statusCode: 500,
-      body: JSON.stringify({ message: 'Server error', error: error.message })
+      body: JSON.stringify({ message: 'Server error', error: error.message }, event)
     }, event);
   }
 };

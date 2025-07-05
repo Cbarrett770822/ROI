@@ -59,6 +59,12 @@ const connectToDatabase = async () => {
 };
 
 exports.handler = async function(event, context) {
+  // Handle CORS preflight requests first
+  const corsResponse = handleCors(event);
+  if (corsResponse) {
+    return corsResponse;
+  }
+  
   // For faster cold starts
   context.callbackWaitsForEmptyEventLoop = false;
   
@@ -66,18 +72,12 @@ exports.handler = async function(event, context) {
     // Connect to the database
     await connectToDatabase();
     
-    // Handle CORS preflight requests
-    const corsResponse = handleCors(event);
-    if (corsResponse) {
-      return corsResponse;
-    }
-    
     // Verify token for all requests except OPTIONS
     const auth = verifyToken(event);
     if (!auth.isValid) {
       return addCorsHeaders({
         statusCode: 401,
-        body: JSON.stringify({ message: auth.error })
+        body: JSON.stringify({ message: auth.error }, event)
       }, event);
     }
 
@@ -127,7 +127,7 @@ exports.handler = async function(event, context) {
           body: JSON.stringify({ 
             message: 'Error fetching companies', 
             error: error.message 
-          })
+          }, event)
         }, event);
       }
     }
@@ -144,7 +144,7 @@ exports.handler = async function(event, context) {
           console.log('Company not found with ID:', companyId);
           return addCorsHeaders({
             statusCode: 404,
-            body: JSON.stringify({ message: 'Company not found' })
+            body: JSON.stringify({ message: 'Company not found' }, event)
           }, event);
         }
         
@@ -155,7 +155,7 @@ exports.handler = async function(event, context) {
           console.log('Access denied: User', username, 'attempted to access company created by', company.createdBy);
           return addCorsHeaders({
             statusCode: 403,
-            body: JSON.stringify({ message: 'Access denied' })
+            body: JSON.stringify({ message: 'Access denied' }, event)
           }, event);
         }
         
@@ -180,7 +180,7 @@ exports.handler = async function(event, context) {
           body: JSON.stringify({ 
             message: 'Error fetching company', 
             error: error.message 
-          })
+          }, event)
         }, event);
       }
     }
@@ -193,7 +193,7 @@ exports.handler = async function(event, context) {
       if (!company) {
         return addCorsHeaders({
           statusCode: 404,
-          body: JSON.stringify({ message: 'Company not found' })
+          body: JSON.stringify({ message: 'Company not found' }, event)
         });
       }
       
@@ -201,13 +201,13 @@ exports.handler = async function(event, context) {
       if (role !== 'admin' && company.createdBy !== username) {
         return addCorsHeaders({
           statusCode: 403,
-          body: JSON.stringify({ message: 'Access denied' })
+          body: JSON.stringify({ message: 'Access denied' }, event)
         });
       }
       
       return addCorsHeaders({
         statusCode: 200,
-        body: JSON.stringify(company.data || {})
+        body: JSON.stringify(company.data || {}, event)
       });
     }
     
@@ -220,7 +220,7 @@ exports.handler = async function(event, context) {
           console.error('Missing request body');
           return addCorsHeaders({
             statusCode: 400,
-            body: JSON.stringify({ message: 'Missing request body' })
+            body: JSON.stringify({ message: 'Missing request body' }, event)
           });
         }
         
@@ -232,7 +232,7 @@ exports.handler = async function(event, context) {
           console.error('Error parsing JSON body:', parseError);
           return addCorsHeaders({
             statusCode: 400,
-            body: JSON.stringify({ message: 'Invalid JSON in request body' })
+            body: JSON.stringify({ message: 'Invalid JSON in request body' }, event)
           });
         }
         
@@ -242,7 +242,7 @@ exports.handler = async function(event, context) {
           console.error('Missing or invalid company name:', name);
           return addCorsHeaders({
             statusCode: 400,
-            body: JSON.stringify({ message: 'Company name is required' })
+            body: JSON.stringify({ message: 'Company name is required' }, event)
           });
         }
         
@@ -280,7 +280,7 @@ exports.handler = async function(event, context) {
             message: 'Error creating company', 
             error: error.message,
             stack: error.stack
-          })
+          }, event)
         });
       }
     }
@@ -294,7 +294,7 @@ exports.handler = async function(event, context) {
       if (!company) {
         return addCorsHeaders({
           statusCode: 404,
-          body: JSON.stringify({ message: 'Company not found' })
+          body: JSON.stringify({ message: 'Company not found' }, event)
         });
       }
       
@@ -302,7 +302,7 @@ exports.handler = async function(event, context) {
       if (role !== 'admin' && company.createdBy !== username) {
         return addCorsHeaders({
           statusCode: 403,
-          body: JSON.stringify({ message: 'Access denied' })
+          body: JSON.stringify({ message: 'Access denied' }, event)
         });
       }
       
@@ -310,7 +310,7 @@ exports.handler = async function(event, context) {
       await company.save();
       return addCorsHeaders({
         statusCode: 200,
-        body: JSON.stringify({ message: 'Data saved successfully' })
+        body: JSON.stringify({ message: 'Data saved successfully' }, event)
       });
     }
     
@@ -323,7 +323,7 @@ exports.handler = async function(event, context) {
       if (!existingCompany) {
         return addCorsHeaders({
           statusCode: 404,
-          body: JSON.stringify({ message: 'Company not found' })
+          body: JSON.stringify({ message: 'Company not found' }, event)
         });
       }
       
@@ -331,7 +331,7 @@ exports.handler = async function(event, context) {
       if (role !== 'admin' && existingCompany.createdBy !== username) {
         return addCorsHeaders({
           statusCode: 403,
-          body: JSON.stringify({ message: 'Access denied' })
+          body: JSON.stringify({ message: 'Access denied' }, event)
         });
       }
       
@@ -357,7 +357,7 @@ exports.handler = async function(event, context) {
       if (!company) {
         return addCorsHeaders({
           statusCode: 404,
-          body: JSON.stringify({ message: 'Company not found' })
+          body: JSON.stringify({ message: 'Company not found' }, event)
         });
       }
       
@@ -365,7 +365,7 @@ exports.handler = async function(event, context) {
       if (role !== 'admin' && company.createdBy !== username) {
         return addCorsHeaders({
           statusCode: 403,
-          body: JSON.stringify({ message: 'Access denied' })
+          body: JSON.stringify({ message: 'Access denied' }, event)
         });
       }
       
@@ -373,7 +373,7 @@ exports.handler = async function(event, context) {
       
       return addCorsHeaders({
         statusCode: 200,
-        body: JSON.stringify({ message: 'Company deleted successfully', companyId })
+        body: JSON.stringify({ message: 'Company deleted successfully', companyId }, event)
       });
     }
     
@@ -381,7 +381,7 @@ exports.handler = async function(event, context) {
     else {
       return addCorsHeaders({
         statusCode: 404,
-        body: JSON.stringify({ message: 'Not found' })
+        body: JSON.stringify({ message: 'Not found' }, event)
       });
     }
   } catch (error) {
@@ -391,7 +391,7 @@ exports.handler = async function(event, context) {
       body: JSON.stringify({ 
         message: 'Internal server error', 
         error: error.message 
-      })
+      }, event)
     });
   }
 };

@@ -95,7 +95,7 @@ exports.handler = async function(event, context) {
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
           hasPasswordHash: !!user.passwordHash
-        })),
+        }, event)),
         anomalies: anomalies.length > 0 ? anomalies : "No anomalies found"
       })
     }, event);
@@ -108,7 +108,7 @@ exports.handler = async function(event, context) {
         message: 'Error debugging users', 
         error: error.message,
         stack: error.stack 
-      })
+      }, event)
     }, event);
   }
 };

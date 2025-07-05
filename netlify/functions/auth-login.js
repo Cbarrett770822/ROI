@@ -103,7 +103,7 @@ const withCors = (handler) => {
         body: JSON.stringify({ 
           message: 'Server error', 
           error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        })
+        }, event)
       }, event);
     }
   };

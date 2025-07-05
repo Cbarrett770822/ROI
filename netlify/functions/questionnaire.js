@@ -199,7 +199,7 @@ exports.handler = async function(event, context) {
     if (!auth.isValid) {
       return addCorsHeaders({
         statusCode: 401,
-        body: JSON.stringify({ message: auth.error })
+        body: JSON.stringify({ message: auth.error }, event)
       });
     }
     
@@ -217,7 +217,7 @@ exports.handler = async function(event, context) {
     if (!company) {
       return addCorsHeaders({
         statusCode: 404,
-        body: JSON.stringify({ message: 'Company not found' })
+        body: JSON.stringify({ message: 'Company not found' }, event)
       });
     }
     
@@ -232,7 +232,7 @@ exports.handler = async function(event, context) {
     //     body: JSON.stringify({ 
     //       message: 'Access denied', 
     //       details: 'You can only access companies that you have created' 
-    //     })
+    //     }, event)
     //   });
     // }
     console.log(`[DEV DEBUG] Access granted (relaxed): User ${username} accessing company ${companyId}`);
@@ -260,7 +260,7 @@ exports.handler = async function(event, context) {
           statusCode: 200,
           body: JSON.stringify({ 
             message: 'Questionnaire answers saved successfully' 
-          })
+          }, event)
         });
       } else {
         console.error('Failed to save questionnaire after retries:', saveResult.error);
@@ -269,7 +269,7 @@ exports.handler = async function(event, context) {
           body: JSON.stringify({ 
             message: 'Failed to save questionnaire after multiple attempts', 
             error: saveResult.error.message 
-          })
+          }, event)
         });
       }
     }
@@ -278,7 +278,7 @@ exports.handler = async function(event, context) {
     else {
       return addCorsHeaders({
         statusCode: 405,
-        body: JSON.stringify({ message: 'Method not allowed' })
+        body: JSON.stringify({ message: 'Method not allowed' }, event)
       });
     }
   } catch (error) {
@@ -288,7 +288,7 @@ exports.handler = async function(event, context) {
       body: JSON.stringify({ 
         message: 'Internal server error', 
         error: error.message 
-      })
+      }, event)
     });
   }
 };

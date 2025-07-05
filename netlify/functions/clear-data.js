@@ -92,7 +92,7 @@ exports.handler = async function(event, context) {
     if (!auth.isValid) {
       return addCorsHeaders({
         statusCode: 401,
-        body: JSON.stringify({ message: auth.error })
+        body: JSON.stringify({ message: auth.error }, event)
       }, event);
     }
     
@@ -101,7 +101,7 @@ exports.handler = async function(event, context) {
       console.log('[clear-data] Non-admin user attempted to clear data:', auth.user.username);
       return addCorsHeaders({
         statusCode: 403,
-        body: JSON.stringify({ message: 'Only admin users can clear data' })
+        body: JSON.stringify({ message: 'Only admin users can clear data' }, event)
       }, event);
     }
     
@@ -122,7 +122,7 @@ exports.handler = async function(event, context) {
         message: 'Data cleared successfully',
         deletedCompanies: companyResult.deletedCount,
         deletedQuestionnaires: questionnaireResult.deletedCount
-      })
+      }, event)
     }, event);
     
   } catch (error) {
@@ -132,7 +132,7 @@ exports.handler = async function(event, context) {
       body: JSON.stringify({ 
         message: 'Error clearing data',
         error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-      })
+      }, event)
     }, event);
   }
 };
