@@ -3,8 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import authFetch from '../../api/authFetch';
 import { exportDataToFile, importDataFromFile } from '../../utils/exportData';
 
-// API endpoints for companies
-const API_URL = 'http://localhost:9999/.netlify/functions';
+// API endpoints for companies - use Netlify-hosted functions
+const API_URL = 'https://roi-wms-app.netlify.app/.netlify/functions';
 
 // Helper function to handle API errors
 const handleApiError = (error) => {

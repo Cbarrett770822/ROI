@@ -219,7 +219,7 @@ const Header = () => {
                   onClick={async () => { 
                     try {
                       // Call the logout API endpoint
-                      await fetch('http://localhost:9999/.netlify/functions/auth-logout', {
+                      await fetch('https://roi-wms-app.netlify.app/.netlify/functions/auth-logout', {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
