@@ -1,7 +1,10 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { getCorsHeaders, handleCors, addCorsHeaders } = require("./utils/corsHeaders");
+
+// Import CORS utilities with absolute path to avoid Netlify build issues
+const corsUtils = require("./utils/corsHeaders");
+const { getCorsHeaders, handleCors, addCorsHeaders } = corsUtils;
 
 // Define User schema
 const userSchema = new mongoose.Schema({
