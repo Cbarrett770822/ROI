@@ -50,7 +50,13 @@ import {
   selectQuestionnaireError
 } from '../redux/slices/questionnaireSlice';
 import { selectActiveCompany } from '../redux/slices/companiesSlice';
-import { setLoading } from '../redux/slices/uiSlice';
+import { setLoading, showNotification } from '../redux/slices/uiSlice';
+
+// Import error boundary
+import ErrorBoundary from '../components/common/ErrorBoundary';
+
+// Import API client
+import { api } from '../api/apiClient';
 
 const QuestionnairePage = () => {
   const { companyId } = useParams();
@@ -124,10 +130,21 @@ const QuestionnairePage = () => {
 
   // Fetch questionnaire data on component mount
   useEffect(() => {
-    if (companyId) {
+    if (companyId && companyId !== 'undefined') {
+      console.log('Fetching questionnaire for company ID:', companyId);
       dispatch(fetchQuestionnaire(companyId));
+    } else {
+      console.error('Company ID is undefined or invalid in QuestionnairePage');
+      // Show notification about the error
+      dispatch(showNotification({
+        message: 'Invalid company selected. Please choose a company from the list.',
+        type: 'error',
+        duration: 5000
+      }));
+      // If no valid company ID is provided, redirect to companies page
+      navigate('/companies');
     }
-  }, [companyId, dispatch]);
+  }, [companyId, dispatch, navigate]);
 
   // Handle answer change
   const handleAnswerChange = (questionId, value) => {
@@ -157,37 +174,72 @@ const QuestionnairePage = () => {
   };
 
   // Handle save
-  const handleSave = async () => {
-    setSaveInProgress(true);
-    
-    try {
-      await dispatch(saveQuestionnaireAnswers({ 
-        companyId, 
-        answers 
+  const handleSave = () => {
+    if (!companyId) {
+      console.error('Cannot save: Company ID is undefined');
+      dispatch(showNotification({
+        message: 'Cannot save: Company ID is missing',
+        type: 'error'
       }));
-      
-      setSaveInProgress(false);
-    } catch (error) {
-      console.error('Error saving answers:', error);
-      setSaveInProgress(false);
+      return;
     }
+    
+    setSaveInProgress(true);
+    dispatch(saveQuestionnaireAnswers({ companyId, answers }))
+      .unwrap()
+      .then(() => {
+        console.log('Questionnaire saved successfully');
+        dispatch(showNotification({
+          message: 'Questionnaire saved successfully',
+          type: 'success'
+        }));
+      })
+      .catch(error => {
+        console.error('Failed to save questionnaire:', error);
+        dispatch(showNotification({
+          message: `Failed to save questionnaire: ${error.message || 'Unknown error'}`,
+          type: 'error'
+        }));
+      })
+      .finally(() => {
+        setSaveInProgress(false);
+      });
   };
 
   // Handle save and navigate to calculator
-  const handleSaveAndCalculate = async () => {
-    dispatch(setLoading(true));
-    
-    try {
-      await dispatch(saveQuestionnaireAnswers({ 
-        companyId, 
-        answers 
+  const handleSaveAndCalculate = () => {
+    if (!companyId) {
+      console.error('Cannot save questionnaire: Company ID is undefined');
+      dispatch(showNotification({
+        message: 'Cannot save: Company ID is missing',
+        type: 'error'
       }));
-      
-      navigate(`/calculator/${companyId}`);
-    } catch (error) {
-      console.error('Error saving answers:', error);
-      dispatch(setLoading(false));
+      return;
     }
+    
+    setSaveInProgress(true);
+    dispatch(saveQuestionnaireAnswers({ companyId, answers }))
+      .unwrap()
+      .then(() => {
+        console.log('Questionnaire saved successfully, navigating to calculator');
+        dispatch(showNotification({
+          message: 'Questionnaire saved successfully. Redirecting to calculator...',
+          type: 'success',
+          duration: 2000
+        }));
+        // Navigate to calculator page
+        navigate(`/calculator/${companyId}`);
+      })
+      .catch((error) => {
+        console.error('Failed to save questionnaire:', error);
+        dispatch(showNotification({
+          message: `Failed to save questionnaire: ${error.message || 'Unknown error'}`,
+          type: 'error'
+        }));
+      })
+      .finally(() => {
+        setSaveInProgress(false);
+      });
   };
 
   if (loading) {
@@ -248,7 +300,7 @@ const QuestionnairePage = () => {
         ) : (
           <Grid container spacing={3}>
             {/* Categories */}
-            <Grid grid={{ xs: 12, md: 2 }}>
+            <Grid item xs={12} md={2}>
               <Box sx={{ position: { md: 'sticky' }, top: { md: 24 } }}>
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
                   Assessment Categories
@@ -326,7 +378,7 @@ const QuestionnairePage = () => {
             </Grid>
             
             {/* Questions */}
-            <Grid grid={{ xs: 12, md: 10 }}>
+            <Grid item xs={12} md={10}>
               {activeCategory && (
                 <Card elevation={2} sx={{ mb: 4 }}>
                   <CardContent sx={{ px: { xs: 2, md: 4 } }}>
@@ -424,4 +476,11 @@ const QuestionnairePage = () => {
   );
 };
 
-export default QuestionnairePage;
+// Wrap the component with ErrorBoundary for better error handling
+const QuestionnairePageWithErrorBoundary = () => (
+  <ErrorBoundary showDetails={false} onReset={() => window.location.reload()}>
+    <QuestionnairePage />
+  </ErrorBoundary>
+);
+
+export default QuestionnairePageWithErrorBoundary;

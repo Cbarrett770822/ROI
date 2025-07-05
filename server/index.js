@@ -3,8 +3,9 @@ const cors = require('cors');
 require('dotenv').config();
 
 // Import routes and services
-const companiesRoutes = require('./routes/companies');
-const questionnaireRoutes = require('./routes/questionnaire');
+const companiesRouter = require('./routes/companies');
+const questionnaireRouter = require('./routes/questionnaire');
+const authRouter = require('./routes/auth');
 const companyDataService = require('./services/companyDataService');
 
 // Initialize express app
@@ -16,8 +17,9 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/api/companies', companiesRoutes);
-app.use('/api/questionnaire', questionnaireRoutes);
+app.use('/api/auth', authRouter);
+app.use('/api/companies', companiesRouter);
+app.use('/api/questionnaire', questionnaireRouter);
 
 // Health check route
 app.get('/api/health', (req, res) => {
