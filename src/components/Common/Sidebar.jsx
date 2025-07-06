@@ -29,7 +29,7 @@ const dashboards = [
   { id: 'traceability', name: 'Traceability & Compliance', icon: <TimelineIcon /> },
   { id: 'supplier', name: 'Supplier Performance', icon: <AssessmentIcon /> },
   { id: 'reports', name: 'Supply Chain Reports', icon: <DescriptionIcon /> },
-  { id: 'datasources', name: 'Infor WMS Data Sources', icon: <StorageIcon /> }
+  { id: 'datasources', name: 'WMS Data Sources', icon: <StorageIcon /> }
 ];
 
 const Sidebar = ({ currentDashboard, onDashboardChange, isDataLoaded }) => {
@@ -117,7 +117,7 @@ const Sidebar = ({ currentDashboard, onDashboardChange, isDataLoaded }) => {
         <Divider sx={{ my: 2 }} />
         <Box sx={{ px: 2, pb: 2 }}>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
-            © 2025 Infor
+            © 2025 WMS Dashboard
           </Typography>
         </Box>
       </Box>

@@ -76,8 +76,8 @@ const Header = ({ isDataLoaded, onResetData }) => {
       <Toolbar sx={{ height: 80, px: 3 }}>
         <Box 
           component="img" 
-          src="/infor-logo.png" 
-          alt="Infor" 
+          src="/logo.png" 
+          alt="WMS Dashboard" 
           sx={{ 
             height: 32, 
             mr: 2,
@@ -98,7 +98,7 @@ const Header = ({ isDataLoaded, onResetData }) => {
               mb: 0.5
             }}
           >
-            Infor Birst
+            WMS Dashboard
           </Typography>
           <Typography 
             variant="h5" 

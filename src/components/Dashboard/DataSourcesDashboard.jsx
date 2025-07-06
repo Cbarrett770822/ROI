@@ -357,7 +357,7 @@ const DataSourcesDashboard = () => {
                   <TableHead>
                     <TableRow sx={{ backgroundColor: 'primary.light' }}>
                       <TableCell><Typography variant="subtitle2">Data Point</Typography></TableCell>
-                      <TableCell><Typography variant="subtitle2">Infor WMS Source</Typography></TableCell>
+                      <TableCell><Typography variant="subtitle2">WMS Source</Typography></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -383,7 +383,7 @@ const DataSourcesDashboard = () => {
         Data Sources
       </Typography>
       <Typography variant="body1" paragraph>
-        This section provides information about where each KPI and report data point is sourced from in the Infor WMS system.
+        This section provides information about where each KPI and report data point is sourced from in the WMS system.
         Use this as a reference for understanding data lineage and for troubleshooting data issues.
       </Typography>
 
