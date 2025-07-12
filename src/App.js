@@ -13,6 +13,9 @@ import InboundLogisticsDashboard from './components/Dashboard/InboundLogisticsDa
 import SupplyChainResponsivenessDashboard from './components/Dashboard/SupplyChainResponsivenessDashboard';
 import TraceabilityDashboard from './components/Dashboard/TraceabilityDashboard';
 import SupplierPerformanceDashboard from './components/Dashboard/SupplierPerformanceDashboard';
+import ThirdPartyLogisticsDashboard from './components/Dashboard/ThirdPartyLogisticsDashboard';
+import RetailDashboard from './components/Dashboard/RetailDashboard';
+import RetailWarehouseDashboard from './components/Dashboard/RetailWarehouseDashboard';
 import ExecutiveDashboard from './components/Dashboard/ExecutiveDashboard';
 import ReportsDashboard from './components/Dashboard/ReportsDashboard';
 import DataSourcesDashboard from './components/Dashboard/DataSourcesDashboard';
@@ -163,6 +166,12 @@ function App() {
         return <TraceabilityDashboard data={dashboardData?.Traceability || []} />;
       case 'supplier':
         return <SupplierPerformanceDashboard data={dashboardData?.SupplierPerformance || []} />;
+      case '3pl':
+        return <ThirdPartyLogisticsDashboard data={dashboardData?.ThirdPartyLogistics || []} />;
+      case 'retail':
+        return <RetailDashboard data={dashboardData?.Retail || []} />;
+      case 'retailwarehouse':
+        return <RetailWarehouseDashboard data={dashboardData?.RetailWarehouse || []} />;
       case 'reports':
         return <ReportsDashboard data={dashboardData || {}} />;
       case 'datasources':
@@ -176,14 +185,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ display: 'flex', height: '100vh' }}>
-        <Header 
-          isDataLoaded={isDataLoaded} 
-          onResetData={() => {
-            localStorage.removeItem('supplyChainData');
-            setDashboardData(null);
-            setIsDataLoaded(false);
-          }} 
-        />
+        <Header />
         <Sidebar 
           currentDashboard={currentDashboard}
           onDashboardChange={handleDashboardChange}

@@ -1,16 +1,14 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { AppBar, Toolbar, Typography, Box, Button, Tooltip } from '@mui/material';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
-// FileDownloadIcon import removed
-import { utils, write } from 'xlsx';
+import { generateSampleData } from '../../utils/sampleDataGenerator';
+import { write, utils } from 'xlsx';
 import { saveAs } from 'file-saver';
 
-// Sample data generator for the template download
-import { generateSampleData } from '../../utils/sampleDataGenerator';
-
-const Header = ({ isDataLoaded, onResetData }) => {
-  const downloadSampleTemplate = () => {
+const Header = () => {
+  // Download template function
+  const downloadTemplate = () => {
     try {
       console.log('Generating sample data...');
       const sampleData = generateSampleData();
@@ -21,9 +19,13 @@ const Header = ({ isDataLoaded, onResetData }) => {
       
       // Add worksheets for each category
       Object.keys(sampleData).forEach(category => {
-        console.log(`Processing category: ${category} with ${sampleData[category].length} rows`);
-        const ws = utils.json_to_sheet(sampleData[category]);
-        utils.book_append_sheet(wb, ws, category);
+        try {
+          console.log(`Processing category: ${category} with ${sampleData[category].length} rows`);
+          const ws = utils.json_to_sheet(sampleData[category]);
+          utils.book_append_sheet(wb, ws, category);
+        } catch (sheetError) {
+          console.error(`Error processing sheet ${category}:`, sheetError);
+        }
       });
       
       // Generate Excel file
@@ -32,28 +34,8 @@ const Header = ({ isDataLoaded, onResetData }) => {
       
       // Create Blob and save file
       console.log('Creating blob and triggering download...');
-      const blob = new Blob([wbout], { type: 'application/vnd.ms-excel' });
-      
-      // Force download using a direct approach as a backup
-      try {
-        // First try the saveAs from file-saver
-        saveAs(blob, 'supply_chain_metrics_template.xlsx');
-        console.log('Download initiated with saveAs');
-      } catch (saveError) {
-        console.error('saveAs failed, trying alternative download method:', saveError);
-        
-        // Fallback method using direct URL creation
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = 'supply_chain_metrics_template.xlsx';
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        console.log('Fallback download method completed');
-      }
+      const blob = new Blob([wbout], { type: 'application/octet-stream' });
+      saveAs(blob, 'supply_chain_metrics_template.xlsx');
       
       console.log('Download template function completed');
     } catch (err) {
@@ -61,8 +43,23 @@ const Header = ({ isDataLoaded, onResetData }) => {
       alert('Error generating template. Please check console for details.');
     }
   };
-
-  // Export Data function removed
+  
+  // Reset data function
+  const resetData = () => {
+    if (window.confirm('Are you sure you want to reset all dashboard data? This will clear any uploaded data.')) {
+      // Clear all data from localStorage
+      localStorage.removeItem('supplyChainData');
+      
+      // Generate fresh sample data
+      const sampleData = generateSampleData();
+      
+      // Store the fresh sample data in localStorage
+      localStorage.setItem('supplyChainData', JSON.stringify(sampleData));
+      
+      // Reload the page to show the fresh data
+      window.location.reload();
+    }
+  };
 
   return (
     <AppBar 
@@ -88,18 +85,7 @@ const Header = ({ isDataLoaded, onResetData }) => {
           }}
         />
         <Box sx={{ flexGrow: 1, my: 1 }}>
-          <Typography 
-            variant="subtitle2" 
-            component="div" 
-            sx={{ 
-              fontWeight: 500,
-              letterSpacing: '0.0075em',
-              color: '#ffffff',
-              mb: 0.5
-            }}
-          >
-            WMS Dashboard
-          </Typography>
+
           <Typography 
             variant="h5" 
             component="div" 
@@ -110,61 +96,45 @@ const Header = ({ isDataLoaded, onResetData }) => {
               mb: 0.5
             }}
           >
-            Supply Chain Metrics Dashboard
+            WMS Demo Dashboard
           </Typography>
-          <Typography 
-            variant="caption" 
-            component="div" 
-            sx={{ 
-              fontStyle: 'italic',
-              color: 'rgba(255, 255, 255, 0.8)'
-            }}
-          >
-            Demo System and Demo data by CB
-          </Typography>
+
         </Box>
         
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button 
-            variant="contained"
-            color="secondary" 
-            startIcon={<CloudUploadIcon />}
-            onClick={downloadSampleTemplate}
-            size="small"
-            sx={{ 
-              borderRadius: '4px',
-              textTransform: 'none',
-              boxShadow: '0px 1px 2px rgba(0, 0, 0, 0.2)',
-              '&:hover': {
-                backgroundColor: '#33bfcd',
-                boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.2)'
-              }
-            }}
-          >
-            Download Template
-          </Button>
-          
-          {isDataLoaded && (
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <Tooltip title="Download Excel Template">
             <Button 
-              variant="outlined"
-              sx={{ 
-                color: '#ffffff', 
-                borderColor: 'rgba(255, 255, 255, 0.5)',
-                borderRadius: '4px',
-                textTransform: 'none',
-                '&:hover': {
-                  borderColor: '#ffffff',
-                  backgroundColor: 'rgba(255, 255, 255, 0.08)'
-                }
-              }}
-              startIcon={<RestartAltIcon />}
-              onClick={onResetData}
+              variant="contained" 
+              color="secondary" 
+              startIcon={<FileDownloadIcon />}
+              onClick={downloadTemplate}
               size="small"
+              sx={{ 
+                bgcolor: 'rgba(255,255,255,0.2)', 
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } 
+              }}
+            >
+              Template
+            </Button>
+          </Tooltip>
+          
+          <Tooltip title="Reset Dashboard Data">
+            <Button 
+              variant="contained" 
+              color="secondary" 
+              startIcon={<RestartAltIcon />}
+              onClick={resetData}
+              size="small"
+              sx={{ 
+                bgcolor: 'rgba(255,255,255,0.2)', 
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' } 
+              }}
             >
               Reset Data
             </Button>
-          )}
+          </Tooltip>
         </Box>
+
       </Toolbar>
     </AppBar>
   );

@@ -58,7 +58,10 @@ const DataUploader = ({ onDataLoaded }) => {
           'InboundLogistics', 
           'SupplyChainResponsiveness', 
           'Traceability', 
-          'SupplierPerformance'
+          'SupplierPerformance',
+          'ThirdPartyLogistics',
+          'Retail',
+          'RetailWarehouse'
         ];
         
         const missingSheets = requiredSheets.filter(sheet => !processedData[sheet]);

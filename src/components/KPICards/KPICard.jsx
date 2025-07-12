@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import CloseIcon from '@mui/icons-material/Close';
+import KPIInfoButton from './KPIInfoButton';
 
 const KPICard = ({ 
   title, 
@@ -103,8 +104,8 @@ const KPICard = ({
         
         <IconButton 
           sx={{ 
-            position: 'absolute', 
-            top: 8, 
+            position: 'absolute',
+            top: 8,
             right: 8,
             opacity: 0.6,
             '&:hover': {
@@ -116,6 +117,8 @@ const KPICard = ({
         >
           <FullscreenIcon fontSize="small" />
         </IconButton>
+        
+        <KPIInfoButton kpiName={title} color={color} />
       </Card>
       
       {/* Expanded view dialog */}

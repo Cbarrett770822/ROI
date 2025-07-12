@@ -18,6 +18,8 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import DescriptionIcon from '@mui/icons-material/Description';
 import StorageIcon from '@mui/icons-material/Storage';
+import WarehouseIcon from '@mui/icons-material/Warehouse';
+import StoreIcon from '@mui/icons-material/Store';
 
 const drawerWidth = 240;
 
@@ -28,6 +30,9 @@ const dashboards = [
   { id: 'responsiveness', name: 'Supply Chain Responsiveness', icon: <SpeedIcon /> },
   { id: 'traceability', name: 'Traceability & Compliance', icon: <TimelineIcon /> },
   { id: 'supplier', name: 'Supplier Performance', icon: <AssessmentIcon /> },
+  { id: '3pl', name: '3PL Metrics', icon: <WarehouseIcon /> },
+  { id: 'retail', name: 'Retail Performance', icon: <StoreIcon /> },
+  { id: 'retailwarehouse', name: 'Retail Warehouse', icon: <WarehouseIcon /> },
   { id: 'reports', name: 'Supply Chain Reports', icon: <DescriptionIcon /> },
   { id: 'datasources', name: 'WMS Data Sources', icon: <StorageIcon /> }
 ];
